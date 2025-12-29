@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useMockData } from '@/context/MockDataContext';
 import type { AttendanceRecord } from '@/types/employee';
 import { format, parseISO, differenceInMinutes } from 'date-fns';
+import { DollarSign } from 'lucide-react';
 import {
   Search,
   Calendar,
@@ -25,7 +26,7 @@ import {
 } from '@/components/ui/select';
 
 export default function Attendance() {
-  const { attendance } = useMockData();
+  const { attendance, employees } = useMockData();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedDate, setSelectedDate] = useState('2024-12-29');
@@ -54,6 +55,31 @@ export default function Attendance() {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
+  };
+
+  const calculateDailyPay = (record: AttendanceRecord) => {
+    const employee = employees.find((e) => e.id === record.employeeId);
+    if (!employee || !record.signInTime || !record.signOutTime) return null;
+
+    const minutes = differenceInMinutes(parseISO(record.signOutTime), parseISO(record.signInTime));
+    const hours = minutes / 60;
+
+    let pay = 0;
+    switch (employee.employmentType) {
+      case 'hourly':
+        pay = hours * employee.workRate.value;
+        break;
+      case 'daily':
+        // Full day rate if worked at least 4 hours, otherwise prorated
+        pay = hours >= 4 ? employee.workRate.value : (hours / 8) * employee.workRate.value;
+        break;
+      case 'weekly':
+        // Daily rate = weekly / 5, then prorate by hours
+        const dailyRate = employee.workRate.value / 5;
+        pay = (hours / 8) * dailyRate;
+        break;
+    }
+    return pay;
   };
 
   const columns = [
@@ -101,6 +127,19 @@ export default function Attendance() {
       key: 'status',
       header: 'Status',
       render: (record: AttendanceRecord) => <StatusBadge status={record.status} />,
+    },
+    {
+      key: 'dailyPay',
+      header: 'Daily Pay',
+      render: (record: AttendanceRecord) => {
+        const pay = calculateDailyPay(record);
+        if (pay === null) return <span className="text-muted-foreground">-</span>;
+        return (
+          <span className="font-semibold text-green-600 dark:text-green-400">
+            ${pay.toFixed(2)}
+          </span>
+        );
+      },
     },
   ];
 
