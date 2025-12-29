@@ -56,12 +56,18 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-table-border">
-      <table className="data-table">
+    <div className="overflow-x-auto rounded-lg border border-table-border -mx-4 sm:mx-0">
+      <table className="data-table w-full">
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} className={column.className}>
+              <th
+                key={column.key}
+                className={cn(
+                  'text-xs sm:text-sm whitespace-nowrap',
+                  column.className
+                )}
+              >
                 {column.header}
               </th>
             ))}
@@ -75,7 +81,10 @@ export function DataTable<T>({
               className={cn(onRowClick && 'cursor-pointer')}
             >
               {columns.map((column) => (
-                <td key={column.key} className={column.className}>
+                <td
+                  key={column.key}
+                  className={cn('text-xs sm:text-sm', column.className)}
+                >
                   {column.render
                     ? column.render(item)
                     : (item as Record<string, unknown>)[column.key]?.toString() ?? '-'}
