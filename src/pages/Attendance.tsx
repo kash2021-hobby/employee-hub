@@ -28,7 +28,7 @@ export default function Attendance() {
   const { attendance } = useMockData();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [selectedDate, setSelectedDate] = useState('2024-12-27');
 
   // Filter attendance
   const filteredAttendance = attendance.filter((record) => {
