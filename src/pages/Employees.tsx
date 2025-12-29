@@ -3,12 +3,12 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmployeeDetailsModal } from '@/components/modals/EmployeeDetailsModal';
+import { EmployeeEditModal } from '@/components/modals/EmployeeEditModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMockData } from '@/context/MockDataContext';
 import type { Employee } from '@/types/employee';
-import { format, parseISO } from 'date-fns';
-import { Search, Eye, Filter } from 'lucide-react';
+import { Search, Eye, Pencil, Filter } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Employees() {
   const { employees } = useMockData();
@@ -23,7 +24,9 @@ export default function Employees() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Get unique departments
   const departments = [...new Set(employees.map((e) => e.department))];
@@ -42,7 +45,12 @@ export default function Employees() {
 
   const handleViewEmployee = (employee: Employee) => {
     setSelectedEmployee(employee);
-    setIsModalOpen(true);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsEditModalOpen(true);
   };
 
   const columns = [
@@ -50,46 +58,54 @@ export default function Employees() {
       key: 'fullName',
       header: 'Employee',
       render: (employee: Employee) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-primary font-medium text-xs sm:text-sm">
               {employee.fullName.split(' ').map((n) => n[0]).join('')}
             </span>
           </div>
-          <div>
-            <p className="font-medium text-foreground">{employee.fullName}</p>
-            <p className="text-sm text-muted-foreground">{employee.position}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-foreground text-sm sm:text-base truncate">
+              {employee.fullName}
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">
+              {employee.position}
+            </p>
           </div>
         </div>
       ),
     },
-    { key: 'department', header: 'Department' },
-    {
-      key: 'employmentType',
-      header: 'Type',
-      render: (employee: Employee) => (
-        <span className="capitalize">{employee.employmentType}</span>
-      ),
-    },
-    {
-      key: 'workRate',
-      header: 'Rate',
-      render: (employee: Employee) =>
-        `$${employee.workRate.value}/${employee.workRate.unit}`,
-    },
-    {
-      key: 'shift',
-      header: 'Shift',
-      render: (employee: Employee) => (
-        <span className="capitalize">{employee.shift}</span>
-      ),
-    },
-    {
-      key: 'leaveBalance',
-      header: 'Leave Balance',
-      render: (employee: Employee) =>
-        `${employee.allowedLeaves - employee.takenLeaves}/${employee.allowedLeaves}`,
-    },
+    ...(isMobile
+      ? []
+      : [
+          { key: 'department', header: 'Department' },
+          {
+            key: 'employmentType',
+            header: 'Type',
+            render: (employee: Employee) => (
+              <span className="capitalize">{employee.employmentType}</span>
+            ),
+          },
+          {
+            key: 'workRate',
+            header: 'Rate',
+            render: (employee: Employee) =>
+              `$${employee.workRate.value}/${employee.workRate.unit}`,
+          },
+          {
+            key: 'shift',
+            header: 'Shift',
+            render: (employee: Employee) => (
+              <span className="capitalize">{employee.shift}</span>
+            ),
+          },
+          {
+            key: 'leaveBalance',
+            header: 'Leave Balance',
+            render: (employee: Employee) =>
+              `${employee.allowedLeaves - employee.takenLeaves}/${employee.allowedLeaves}`,
+          },
+        ]),
     {
       key: 'status',
       header: 'Status',
@@ -99,17 +115,32 @@ export default function Employees() {
       key: 'actions',
       header: 'Actions',
       render: (employee: Employee) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleViewEmployee(employee);
-          }}
-        >
-          <Eye className="w-4 h-4 mr-1" />
-          View
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewEmployee(employee);
+            }}
+            className="h-8 px-2 sm:px-3"
+          >
+            <Eye className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1">View</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditEmployee(employee);
+            }}
+            className="h-8 px-2 sm:px-3"
+          >
+            <Pencil className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1">Edit</span>
+          </Button>
+        </div>
       ),
     },
   ];
@@ -122,8 +153,8 @@ export default function Employees() {
       />
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, position, or department..."
@@ -132,31 +163,33 @@ export default function Employees() {
             className="pl-10"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="on-leave">On Leave</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Department" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Departments</SelectItem>
-            {departments.map((dept) => (
-              <SelectItem key={dept} value={dept}>
-                {dept}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <Filter className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="on-leave">On Leave</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Departments</SelectItem>
+              {departments.map((dept) => (
+                <SelectItem key={dept} value={dept}>
+                  {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Results count */}
@@ -175,8 +208,15 @@ export default function Employees() {
       {/* Employee Details Modal */}
       <EmployeeDetailsModal
         employee={selectedEmployee}
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
+        open={isViewModalOpen}
+        onOpenChange={setIsViewModalOpen}
+      />
+
+      {/* Employee Edit Modal */}
+      <EmployeeEditModal
+        employee={selectedEmployee}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
       />
     </div>
   );
