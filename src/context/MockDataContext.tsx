@@ -442,6 +442,7 @@ interface MockDataContextType {
   approveLeave: (id: string) => void;
   rejectLeave: (id: string) => void;
   approveNewEmployee: (id: string) => void;
+  approveNewEmployeeWithData: (id: string, employeeData: Omit<Employee, 'id' | 'status' | 'takenLeaves' | 'latestSignIn' | 'latestSignOut'>) => void;
   rejectNewEmployee: (id: string) => void;
   addHoliday: (holiday: Omit<Holiday, 'id'>) => void;
   updateHoliday: (id: string, holiday: Partial<Holiday>) => void;
@@ -544,6 +545,21 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const approveNewEmployeeWithData = (id: string, employeeData: Omit<Employee, 'id' | 'status' | 'takenLeaves' | 'latestSignIn' | 'latestSignOut'>) => {
+    const newEmployee: Employee = {
+      id: `emp-${Date.now()}`,
+      ...employeeData,
+      status: 'active',
+      takenLeaves: 0,
+      latestSignIn: null,
+      latestSignOut: null,
+    };
+    setEmployees((prev) => [...prev, newEmployee]);
+    setNewEmployeeRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: 'approved' as const } : r))
+    );
+  };
+
   const rejectNewEmployee = (id: string) => {
     setNewEmployeeRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: 'rejected' as const } : r))
@@ -597,6 +613,7 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
         approveLeave,
         rejectLeave,
         approveNewEmployee,
+        approveNewEmployeeWithData,
         rejectNewEmployee,
         addHoliday,
         updateHoliday,
