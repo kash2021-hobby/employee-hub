@@ -9,6 +9,7 @@ import type { LeaveRequest, NewEmployeeRequest } from '@/types/employee';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { Check, X, Calendar, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ApproveEmployeeModal } from '@/components/modals/ApproveEmployeeModal';
 
 export default function Notifications() {
   const {
@@ -16,10 +17,11 @@ export default function Notifications() {
     newEmployeeRequests,
     approveLeave,
     rejectLeave,
-    approveNewEmployee,
     rejectNewEmployee,
   } = useMockData();
   const { toast } = useToast();
+  const [selectedRequest, setSelectedRequest] = useState<NewEmployeeRequest | null>(null);
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
 
   const pendingLeaves = leaveRequests.filter((l) => l.status === 'pending');
   const pendingNewEmployees = newEmployeeRequests.filter((n) => n.status === 'pending');
@@ -41,12 +43,9 @@ export default function Notifications() {
     });
   };
 
-  const handleApproveNewEmployee = (id: string, employeeName: string) => {
-    approveNewEmployee(id);
-    toast({
-      title: 'Employee Approved',
-      description: `${employeeName} has been added to the employee list.`,
-    });
+  const handleApproveNewEmployee = (request: NewEmployeeRequest) => {
+    setSelectedRequest(request);
+    setIsApproveModalOpen(true);
   };
 
   const handleRejectNewEmployee = (id: string, employeeName: string) => {
@@ -194,7 +193,7 @@ export default function Notifications() {
             variant="default"
             onClick={(e) => {
               e.stopPropagation();
-              handleApproveNewEmployee(item.id, item.employeeData.fullName);
+              handleApproveNewEmployee(item);
             }}
           >
             <Check className="w-4 h-4 mr-1" />
@@ -269,6 +268,13 @@ export default function Notifications() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Approve Employee Modal */}
+      <ApproveEmployeeModal
+        request={selectedRequest}
+        open={isApproveModalOpen}
+        onOpenChange={setIsApproveModalOpen}
+      />
     </div>
   );
 }
