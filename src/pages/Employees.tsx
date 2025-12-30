@@ -4,11 +4,12 @@ import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmployeeDetailsModal } from '@/components/modals/EmployeeDetailsModal';
 import { EmployeeEditModal } from '@/components/modals/EmployeeEditModal';
+import { AddEmployeeModal } from '@/components/modals/AddEmployeeModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMockData } from '@/context/MockDataContext';
 import type { Employee } from '@/types/employee';
-import { Search, Eye, Pencil, Filter } from 'lucide-react';
+import { Search, Eye, Pencil, Filter, UserPlus } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ export default function Employees() {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const isMobile = useIsMobile();
 
   // Get unique departments
@@ -147,10 +149,16 @@ export default function Employees() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader
-        title="Employee Master Data"
-        description="Manage and view all employee records"
-      />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <PageHeader
+          title="Employee Master Data"
+          description="Manage and view all employee records"
+        />
+        <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
+          <UserPlus className="w-4 h-4 mr-2" />
+          Add New Employee
+        </Button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-3 mb-6">
@@ -217,6 +225,12 @@ export default function Employees() {
         employee={selectedEmployee}
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
+      />
+
+      {/* Add Employee Modal */}
+      <AddEmployeeModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
       />
     </div>
   );
