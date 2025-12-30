@@ -447,6 +447,7 @@ interface MockDataContextType {
   updateHoliday: (id: string, holiday: Partial<Holiday>) => void;
   deleteHoliday: (id: string) => void;
   updateEmployee: (id: string, data: Partial<Employee>) => void;
+  addEmployee: (employee: Omit<Employee, 'id' | 'status' | 'takenLeaves' | 'latestSignIn' | 'latestSignOut'>) => void;
 }
 
 const MockDataContext = createContext<MockDataContextType | null>(null);
@@ -572,6 +573,18 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const addEmployee = (employeeData: Omit<Employee, 'id' | 'status' | 'takenLeaves' | 'latestSignIn' | 'latestSignOut'>) => {
+    const newEmployee: Employee = {
+      id: `emp-${Date.now()}`,
+      ...employeeData,
+      status: 'active',
+      takenLeaves: 0,
+      latestSignIn: null,
+      latestSignOut: null,
+    };
+    setEmployees((prev) => [...prev, newEmployee]);
+  };
+
   return (
     <MockDataContext.Provider
       value={{
@@ -589,6 +602,7 @@ export function MockDataProvider({ children }: { children: ReactNode }) {
         updateHoliday,
         deleteHoliday,
         updateEmployee,
+        addEmployee,
       }}
     >
       {children}
