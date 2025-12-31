@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useMockData } from '@/context/MockDataContext';
 import type { Employee } from '@/types/employee';
-import { Search, Eye, Pencil, Filter, UserPlus } from 'lucide-react';
+import { Search, Eye, Pencil, Filter, UserPlus, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -20,7 +21,8 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Employees() {
-  const { employees } = useMockData();
+  const { employees, deleteEmployee } = useMockData();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
@@ -53,6 +55,14 @@ export default function Employees() {
   const handleEditEmployee = (employee: Employee) => {
     setSelectedEmployee(employee);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteEmployee = (employee: Employee) => {
+    deleteEmployee(employee.id);
+    toast({
+      title: 'Employee Deleted',
+      description: `${employee.fullName} has been removed.`,
+    });
   };
 
   const columns = [
@@ -141,6 +151,18 @@ export default function Employees() {
           >
             <Pencil className="w-4 h-4" />
             <span className="hidden sm:inline ml-1">Edit</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteEmployee(employee);
+            }}
+            className="h-8 px-2 sm:px-3 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span className="hidden sm:inline ml-1">Delete</span>
           </Button>
         </div>
       ),
