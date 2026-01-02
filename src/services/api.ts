@@ -7,8 +7,10 @@ import type {
   EmployeeOnLeave,
 } from '@/types/employee';
 
-// Base API URL - should be configured via environment variable in production
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Base API URL - Configure this to your backend server
+// For local development: http://localhost:3000
+// For production: https://your-production-server.com
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 // Generic fetch wrapper with error handling
 async function fetchApi<T>(
@@ -35,129 +37,111 @@ async function fetchApi<T>(
 
 // Employee API
 export const employeeApi = {
-  getAll: () => fetchApi<Employee[]>('/employees'),
+  getAll: () => fetchApi<Employee[]>('/api/employees'),
   
-  getById: (id: string) => fetchApi<Employee>(`/employees/${id}`),
+  getById: (id: string) => fetchApi<Employee>(`/api/employees/${id}`),
   
   create: (data: Omit<Employee, 'id'>) =>
-    fetchApi<Employee>('/employees', {
+    fetchApi<{ message: string; data: Employee }>('/api/employees', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
   
   update: (id: string, data: Partial<Employee>) =>
-    fetchApi<Employee>(`/employees/${id}`, {
-      method: 'PATCH',
+    fetchApi<{ message: string; data: Employee }>(`/api/employees/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     }),
   
   delete: (id: string) =>
-    fetchApi<void>(`/employees/${id}`, {
+    fetchApi<{ message: string }>(`/api/employees/${id}`, {
       method: 'DELETE',
     }),
 };
 
 // Attendance API
 export const attendanceApi = {
-  getAll: (date?: string) => {
-    const query = date ? `?date=${date}` : '';
-    return fetchApi<AttendanceRecord[]>(`/attendance${query}`);
-  },
+  getAll: () => fetchApi<AttendanceRecord[]>('/api/attendance'),
   
-  getByEmployee: (employeeId: string, startDate?: string, endDate?: string) => {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
-    const query = params.toString() ? `?${params}` : '';
-    return fetchApi<AttendanceRecord[]>(`/attendance/employee/${employeeId}${query}`);
-  },
-  
-  signIn: (employeeId: string) =>
-    fetchApi<AttendanceRecord>('/attendance/sign-in', {
+  clockIn: (employee_id: string) =>
+    fetchApi<{ message: string; data: AttendanceRecord }>('/api/attendance/clock-in', {
       method: 'POST',
-      body: JSON.stringify({ employeeId }),
+      body: JSON.stringify({ employee_id }),
     }),
   
-  signOut: (employeeId: string) =>
-    fetchApi<AttendanceRecord>('/attendance/sign-out', {
-      method: 'POST',
-      body: JSON.stringify({ employeeId }),
+  clockOut: (employee_id: string) =>
+    fetchApi<{ message: string; total_hours: string; data: AttendanceRecord }>('/api/attendance/clock-out', {
+      method: 'PUT',
+      body: JSON.stringify({ employee_id }),
     }),
 };
 
 // Leave Request API
 export const leaveApi = {
-  getAll: (status?: 'pending' | 'approved' | 'rejected') => {
-    const query = status ? `?status=${status}` : '';
-    return fetchApi<LeaveRequest[]>(`/leaves${query}`);
-  },
+  getAll: () => fetchApi<LeaveRequest[]>('/api/leaves'),
   
-  getByEmployee: (employeeId: string) =>
-    fetchApi<LeaveRequest[]>(`/leaves/employee/${employeeId}`),
-  
-  create: (data: Omit<LeaveRequest, 'id' | 'status' | 'createdAt'>) =>
-    fetchApi<LeaveRequest>('/leaves', {
+  create: (data: {
+    employee_id: string;
+    leave_type: 'planned' | 'happy' | 'medical';
+    start_date: string;
+    end_date: string;
+    reason?: string;
+  }) =>
+    fetchApi<{ message: string; data: LeaveRequest }>('/api/leaves', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
   
-  approve: (id: string) =>
-    fetchApi<LeaveRequest>(`/leaves/${id}/approve`, {
-      method: 'POST',
-    }),
-  
-  reject: (id: string) =>
-    fetchApi<LeaveRequest>(`/leaves/${id}/reject`, {
-      method: 'POST',
+  updateStatus: (id: string, status: 'approved' | 'rejected') =>
+    fetchApi<{ message: string; data: LeaveRequest }>(`/api/leaves/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
     }),
 };
 
-// New Employee Request API
+// New Employee Request API (if you add this to your backend later)
 export const newEmployeeApi = {
   getAll: (status?: 'pending' | 'approved' | 'rejected') => {
     const query = status ? `?status=${status}` : '';
-    return fetchApi<NewEmployeeRequest[]>(`/new-employees${query}`);
+    return fetchApi<NewEmployeeRequest[]>(`/api/new-employees${query}`);
   },
   
   approve: (id: string) =>
-    fetchApi<Employee>(`/new-employees/${id}/approve`, {
+    fetchApi<Employee>(`/api/new-employees/${id}/approve`, {
       method: 'POST',
     }),
   
   reject: (id: string) =>
-    fetchApi<void>(`/new-employees/${id}/reject`, {
+    fetchApi<void>(`/api/new-employees/${id}/reject`, {
       method: 'POST',
     }),
 };
 
 // Holiday API
 export const holidayApi = {
-  getAll: () => fetchApi<Holiday[]>('/holidays'),
+  getAll: () => fetchApi<Holiday[]>('/api/holidays'),
   
   create: (data: Omit<Holiday, 'id'>) =>
-    fetchApi<Holiday>('/holidays', {
+    fetchApi<{ message: string; data: Holiday }>('/api/holidays', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
   
   update: (id: string, data: Partial<Holiday>) =>
-    fetchApi<Holiday>(`/holidays/${id}`, {
-      method: 'PATCH',
+    fetchApi<{ message: string; data: Holiday }>(`/api/holidays/${id}`, {
+      method: 'PUT',
       body: JSON.stringify(data),
     }),
   
   delete: (id: string) =>
-    fetchApi<void>(`/holidays/${id}`, {
+    fetchApi<{ message: string }>(`/api/holidays/${id}`, {
       method: 'DELETE',
     }),
 };
 
-// Employees on Leave API
+// Employees on Leave API (derived from leave requests)
 export const employeesOnLeaveApi = {
-  getAll: (date?: string) => {
-    const query = date ? `?date=${date}` : '';
-    return fetchApi<EmployeeOnLeave[]>(`/employees-on-leave${query}`);
-  },
+  getAll: () => fetchApi<EmployeeOnLeave[]>('/api/leaves?status=approved'),
 };
 
 // Dashboard Stats API
