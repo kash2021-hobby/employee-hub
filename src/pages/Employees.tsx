@@ -7,9 +7,9 @@ import { EmployeeEditModal } from '@/components/modals/EmployeeEditModal';
 import { AddEmployeeModal } from '@/components/modals/AddEmployeeModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useMockData } from '@/context/MockDataContext';
+import { useEmployees, useDeleteEmployee } from '@/hooks/useEmployees';
 import type { Employee } from '@/types/employee';
-import { Search, Eye, Pencil, Filter, UserPlus, Trash2 } from 'lucide-react';
+import { Search, Eye, Pencil, Filter, UserPlus, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Select,
@@ -21,7 +21,8 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Employees() {
-  const { employees, deleteEmployee } = useMockData();
+  const { data: employees = [], isLoading, error } = useEmployees();
+  const deleteEmployeeMutation = useDeleteEmployee();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -57,12 +58,20 @@ export default function Employees() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteEmployee = (employee: Employee) => {
-    deleteEmployee(employee.id);
-    toast({
-      title: 'Employee Deleted',
-      description: `${employee.fullName} has been removed.`,
-    });
+  const handleDeleteEmployee = async (employee: Employee) => {
+    try {
+      await deleteEmployeeMutation.mutateAsync(employee.id);
+      toast({
+        title: 'Employee Deleted',
+        description: `${employee.fullName} has been removed.`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'Failed to delete employee',
+        variant: 'destructive',
+      });
+    }
   };
 
   const columns = [
@@ -102,7 +111,7 @@ export default function Employees() {
             key: 'workRate',
             header: 'Rate',
             render: (employee: Employee) =>
-              `$${employee.workRate.value}/${employee.workRate.unit}`,
+              `$${employee.workRate.value}${employee.workRate.unit}`,
           },
           {
             key: 'shift',
@@ -160,6 +169,7 @@ export default function Employees() {
               handleDeleteEmployee(employee);
             }}
             className="h-8 px-2 sm:px-3 text-destructive hover:text-destructive"
+            disabled={deleteEmployeeMutation.isPending}
           >
             <Trash2 className="w-4 h-4" />
             <span className="hidden sm:inline ml-1">Delete</span>
@@ -168,6 +178,25 @@ export default function Employees() {
       ),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load employees</p>
+        <p className="text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : 'Please check your API connection'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
