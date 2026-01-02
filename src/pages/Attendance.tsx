@@ -3,19 +3,18 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useMockData } from '@/context/MockDataContext';
+import { useAttendance } from '@/hooks/useAttendance';
+import { useEmployees } from '@/hooks/useEmployees';
 import type { AttendanceRecord } from '@/types/employee';
 import { format, parseISO, differenceInMinutes } from 'date-fns';
-import { DollarSign } from 'lucide-react';
 import {
   Search,
   Calendar,
-  Clock,
   UserCheck,
   AlertTriangle,
   UserX,
+  Loader2,
 } from 'lucide-react';
 import {
   Select,
@@ -26,10 +25,11 @@ import {
 } from '@/components/ui/select';
 
 export default function Attendance() {
-  const { attendance, employees } = useMockData();
+  const { data: attendance = [], isLoading, error } = useAttendance();
+  const { data: employees = [] } = useEmployees();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedDate, setSelectedDate] = useState('2024-12-29');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Filter attendance
   const filteredAttendance = attendance.filter((record) => {
@@ -51,7 +51,7 @@ export default function Attendance() {
 
   const calculateWorkingHours = (signIn: string | null, signOut: string | null) => {
     if (!signIn || !signOut) return '-';
-    const minutes = differenceInMinutes(parseISO(signOut), parseISO(signIn));
+    const minutes = differenceInMinutes(new Date(signOut), new Date(signIn));
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
@@ -61,7 +61,7 @@ export default function Attendance() {
     const employee = employees.find((e) => e.id === record.employeeId);
     if (!employee || !record.signInTime || !record.signOutTime) return null;
 
-    const minutes = differenceInMinutes(parseISO(record.signOutTime), parseISO(record.signInTime));
+    const minutes = differenceInMinutes(new Date(record.signOutTime), new Date(record.signInTime));
     const hours = minutes / 60;
 
     let pay = 0;
@@ -70,11 +70,9 @@ export default function Attendance() {
         pay = hours * employee.workRate.value;
         break;
       case 'daily':
-        // Full day rate if worked at least 4 hours, otherwise prorated
         pay = hours >= 4 ? employee.workRate.value : (hours / 8) * employee.workRate.value;
         break;
       case 'weekly':
-        // Daily rate = weekly / 5, then prorate by hours
         const dailyRate = employee.workRate.value / 5;
         pay = (hours / 8) * dailyRate;
         break;
@@ -109,13 +107,13 @@ export default function Attendance() {
       key: 'signInTime',
       header: 'Sign In',
       render: (record: AttendanceRecord) =>
-        record.signInTime ? format(parseISO(record.signInTime), 'hh:mm a') : '-',
+        record.signInTime ? format(new Date(record.signInTime), 'hh:mm a') : '-',
     },
     {
       key: 'signOutTime',
       header: 'Sign Out',
       render: (record: AttendanceRecord) =>
-        record.signOutTime ? format(parseISO(record.signOutTime), 'hh:mm a') : '-',
+        record.signOutTime ? format(new Date(record.signOutTime), 'hh:mm a') : '-',
     },
     {
       key: 'totalWorkingHours',
@@ -142,6 +140,25 @@ export default function Attendance() {
       },
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load attendance data</p>
+        <p className="text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : 'Please check your API connection'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">

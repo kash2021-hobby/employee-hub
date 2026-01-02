@@ -3,11 +3,11 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { DataTable } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/button';
 import { HolidayFormModal } from '@/components/modals/HolidayFormModal';
-import { useMockData } from '@/context/MockDataContext';
+import { useHolidays, useCreateHoliday, useUpdateHoliday, useDeleteHoliday } from '@/hooks/useHolidays';
 import { useToast } from '@/hooks/use-toast';
 import type { Holiday } from '@/types/employee';
 import { format, parseISO, isPast, isFuture, isToday } from 'date-fns';
-import { Plus, Pencil, Trash2, Calendar, CalendarCheck, CalendarX } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, CalendarCheck, CalendarX, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,12 +20,14 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function Holidays() {
-  const { holidays, addHoliday, updateHoliday, deleteHoliday } = useMockData();
+  const { data: holidays = [], isLoading, error } = useHolidays();
+  const createHoliday = useCreateHoliday();
+  const updateHoliday = useUpdateHoliday();
+  const deleteHolidayMutation = useDeleteHoliday();
   const { toast } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedHoliday, setSelectedHoliday] = useState<Holiday | null>(null);
-  const [loading, setLoading] = useState(false);
 
   // Sort holidays by date
   const sortedHolidays = [...holidays].sort(
@@ -53,36 +55,48 @@ export default function Holidays() {
   };
 
   const handleSubmit = async (data: Omit<Holiday, 'id'>) => {
-    setLoading(true);
     try {
       if (selectedHoliday) {
-        updateHoliday(selectedHoliday.id, data);
+        await updateHoliday.mutateAsync({ id: selectedHoliday.id, data });
         toast({
           title: 'Holiday Updated',
           description: `${data.name} has been updated successfully.`,
         });
       } else {
-        addHoliday(data);
+        await createHoliday.mutateAsync(data);
         toast({
           title: 'Holiday Added',
           description: `${data.name} has been added to the calendar.`,
         });
       }
-    } finally {
-      setLoading(false);
+      setIsFormOpen(false);
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err instanceof Error ? err.message : 'An error occurred',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedHoliday) {
-      deleteHoliday(selectedHoliday.id);
-      toast({
-        title: 'Holiday Deleted',
-        description: `${selectedHoliday.name} has been removed.`,
-        variant: 'destructive',
-      });
-      setIsDeleteOpen(false);
-      setSelectedHoliday(null);
+      try {
+        await deleteHolidayMutation.mutateAsync(selectedHoliday.id);
+        toast({
+          title: 'Holiday Deleted',
+          description: `${selectedHoliday.name} has been removed.`,
+          variant: 'destructive',
+        });
+        setIsDeleteOpen(false);
+        setSelectedHoliday(null);
+      } catch (err) {
+        toast({
+          title: 'Error',
+          description: err instanceof Error ? err.message : 'Failed to delete holiday',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -195,6 +209,25 @@ export default function Holidays() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-destructive">Failed to load holidays</p>
+        <p className="text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : 'Please check your API connection'}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <PageHeader
@@ -261,7 +294,7 @@ export default function Holidays() {
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         onSubmit={handleSubmit}
-        loading={loading}
+        loading={createHoliday.isPending || updateHoliday.isPending}
       />
 
       {/* Delete Confirmation */}
@@ -279,7 +312,9 @@ export default function Holidays() {
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteHolidayMutation.isPending}
             >
+              {deleteHolidayMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
