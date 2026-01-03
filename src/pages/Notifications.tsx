@@ -4,7 +4,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { useLeaveRequests, useUpdateLeaveStatus } from '@/hooks/useLeaves';
-import { useMockData } from '@/context/MockDataContext';
+import { useNewEmployeeRequests, useRejectNewEmployee } from '@/hooks/useNewEmployees';
 import { useToast } from '@/hooks/use-toast';
 import type { LeaveRequest, NewEmployeeRequest } from '@/types/employee';
 import { format, parseISO, differenceInDays } from 'date-fns';
@@ -13,9 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ApproveEmployeeModal } from '@/components/modals/ApproveEmployeeModal';
 
 export default function Notifications() {
-  const { data: leaveRequests = [], isLoading, error } = useLeaveRequests();
-  const { newEmployeeRequests, rejectNewEmployee } = useMockData();
+  const { data: leaveRequests = [], isLoading: leavesLoading, error: leavesError } = useLeaveRequests();
+  const { data: newEmployeeRequests = [], isLoading: employeesLoading, error: employeesError } = useNewEmployeeRequests('pending');
   const updateLeaveStatus = useUpdateLeaveStatus();
+  const rejectNewEmployee = useRejectNewEmployee();
   const { toast } = useToast();
   const [selectedRequest, setSelectedRequest] = useState<NewEmployeeRequest | null>(null);
   const [approveModalOpen, setApproveModalOpen] = useState(false);
@@ -46,9 +47,13 @@ export default function Notifications() {
     setApproveModalOpen(true);
   };
 
-  const handleRejectNewEmployee = (id: string, name: string) => {
-    rejectNewEmployee(id);
-    toast({ title: 'Request Rejected', description: `Application from ${name} has been rejected.`, variant: 'destructive' });
+  const handleRejectNewEmployee = async (id: string, name: string) => {
+    try {
+      await rejectNewEmployee.mutateAsync(id);
+      toast({ title: 'Request Rejected', description: `Application from ${name} has been rejected.`, variant: 'destructive' });
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to reject', variant: 'destructive' });
+    }
   };
 
   const leaveColumns = [
@@ -132,6 +137,9 @@ export default function Notifications() {
       ),
     },
   ];
+
+  const isLoading = leavesLoading || employeesLoading;
+  const error = leavesError || employeesError;
 
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (error) return <div className="flex flex-col items-center justify-center h-64 gap-4"><p className="text-destructive">Failed to load data</p></div>;

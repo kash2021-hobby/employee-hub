@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useMockData } from '@/context/MockDataContext';
+import { useApproveNewEmployee } from '@/hooks/useNewEmployees';
 import { useToast } from '@/hooks/use-toast';
 import type { EmploymentType, ShiftType, IdProofType, NewEmployeeRequest } from '@/types/employee';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -47,7 +47,7 @@ interface FormData {
 }
 
 export function ApproveEmployeeModal({ request, open, onOpenChange }: ApproveEmployeeModalProps) {
-  const { approveNewEmployeeWithData } = useMockData();
+  const approveEmployee = useApproveNewEmployee();
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
@@ -100,7 +100,7 @@ export function ApproveEmployeeModal({ request, open, onOpenChange }: ApproveEmp
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!request) return;
     
@@ -134,32 +134,38 @@ export function ApproveEmployeeModal({ request, open, onOpenChange }: ApproveEmp
       return;
     }
 
-    approveNewEmployeeWithData(request.id, {
-      fullName: formData.fullName.trim(),
-      dateOfBirth: formData.dateOfBirth,
-      joiningDate: formData.joiningDate,
-      employmentType: formData.employmentType,
-      workRate: {
-        value: formData.workRateValue,
-        unit: getWorkRateUnit(formData.employmentType),
-      },
-      position: formData.position.trim(),
-      department: formData.department.trim(),
-      shift: formData.shift,
-      workHours: {
-        start: formData.workHoursStart,
-        end: formData.workHoursEnd,
-      },
-      phoneNumber: formData.phoneNumber.trim(),
-      idProofType: formData.idProofType,
-      idProofNumber: formData.idProofNumber.trim(),
-      allowedLeaves: formData.allowedLeaves,
-      email: formData.email.trim() || undefined,
-      address: formData.address.trim() || undefined,
-    });
-
-    toast({ title: 'Success', description: `${formData.fullName} has been added to the employee list.` });
-    onOpenChange(false);
+    try {
+      await approveEmployee.mutateAsync({
+        id: request.id,
+        employeeData: {
+          fullName: formData.fullName.trim(),
+          dateOfBirth: formData.dateOfBirth,
+          joiningDate: formData.joiningDate,
+          employmentType: formData.employmentType,
+          workRate: {
+            value: formData.workRateValue,
+            unit: getWorkRateUnit(formData.employmentType),
+          },
+          position: formData.position.trim(),
+          department: formData.department.trim(),
+          shift: formData.shift,
+          workHours: {
+            start: formData.workHoursStart,
+            end: formData.workHoursEnd,
+          },
+          phoneNumber: formData.phoneNumber.trim(),
+          idProofType: formData.idProofType,
+          idProofNumber: formData.idProofNumber.trim(),
+          allowedLeaves: formData.allowedLeaves,
+          email: formData.email.trim() || undefined,
+          address: formData.address.trim() || undefined,
+        },
+      });
+      toast({ title: 'Success', description: `${formData.fullName} has been added to the employee list.` });
+      onOpenChange(false);
+    } catch (err) {
+      toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to approve employee', variant: 'destructive' });
+    }
   };
 
   const handleChange = (field: keyof FormData, value: string | number) => {
@@ -377,8 +383,8 @@ export function ApproveEmployeeModal({ request, open, onOpenChange }: ApproveEmp
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" onClick={handleSubmit}>
-            Approve & Add Employee
+          <Button type="submit" onClick={handleSubmit} disabled={approveEmployee.isPending}>
+            {approveEmployee.isPending ? 'Approving...' : 'Approve & Add Employee'}
           </Button>
         </DialogFooter>
       </DialogContent>

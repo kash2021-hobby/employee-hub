@@ -6,9 +6,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { useMockData } from '@/context/MockDataContext';
+import { useAttendance } from '@/hooks/useAttendance';
 import type { Employee } from '@/types/employee';
-import { format, parseISO, differenceInMinutes, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, parseISO, differenceInMinutes, startOfMonth, endOfMonth } from 'date-fns';
 import {
   User,
   Calendar,
@@ -47,7 +47,7 @@ export function EmployeeDetailsModal({
   open,
   onOpenChange,
 }: EmployeeDetailsModalProps) {
-  const { attendance } = useMockData();
+  const { data: attendance = [] } = useAttendance();
   const [selectedMonth, setSelectedMonth] = useState(new Date(2024, 11)); // December 2024
 
   if (!employee) return null;
