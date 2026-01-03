@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useMockData } from '@/context/MockDataContext';
+import { useCreateEmployee } from '@/hooks/useEmployees';
 import { useToast } from '@/hooks/use-toast';
 import type { EmploymentType, ShiftType, IdProofType } from '@/types/employee';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -65,7 +65,7 @@ const initialFormData: FormData = {
 };
 
 export function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModalProps) {
-  const { addEmployee } = useMockData();
+  const createEmployee = useCreateEmployee();
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
@@ -110,33 +110,45 @@ export function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModalProps) 
       return;
     }
 
-    addEmployee({
-      fullName: formData.fullName.trim(),
-      dateOfBirth: formData.dateOfBirth,
-      joiningDate: formData.joiningDate,
-      employmentType: formData.employmentType,
-      workRate: {
-        value: formData.workRateValue,
-        unit: getWorkRateUnit(formData.employmentType),
+    createEmployee.mutate(
+      {
+        fullName: formData.fullName.trim(),
+        dateOfBirth: formData.dateOfBirth,
+        joiningDate: formData.joiningDate,
+        employmentType: formData.employmentType,
+        workRate: {
+          value: formData.workRateValue,
+          unit: getWorkRateUnit(formData.employmentType),
+        },
+        position: formData.position.trim(),
+        department: formData.department.trim(),
+        shift: formData.shift,
+        workHours: {
+          start: formData.workHoursStart,
+          end: formData.workHoursEnd,
+        },
+        phoneNumber: formData.phoneNumber.trim(),
+        idProofType: formData.idProofType,
+        idProofNumber: formData.idProofNumber.trim(),
+        allowedLeaves: formData.allowedLeaves,
+        takenLeaves: 0,
+        latestSignIn: null,
+        latestSignOut: null,
+        status: 'active',
+        email: formData.email.trim() || undefined,
+        address: formData.address.trim() || undefined,
       },
-      position: formData.position.trim(),
-      department: formData.department.trim(),
-      shift: formData.shift,
-      workHours: {
-        start: formData.workHoursStart,
-        end: formData.workHoursEnd,
-      },
-      phoneNumber: formData.phoneNumber.trim(),
-      idProofType: formData.idProofType,
-      idProofNumber: formData.idProofNumber.trim(),
-      allowedLeaves: formData.allowedLeaves,
-      email: formData.email.trim() || undefined,
-      address: formData.address.trim() || undefined,
-    });
-
-    toast({ title: 'Success', description: 'Employee added successfully' });
-    setFormData(initialFormData);
-    onOpenChange(false);
+      {
+        onSuccess: () => {
+          toast({ title: 'Success', description: 'Employee added successfully' });
+          setFormData(initialFormData);
+          onOpenChange(false);
+        },
+        onError: (error) => {
+          toast({ title: 'Error', description: error.message || 'Failed to add employee', variant: 'destructive' });
+        },
+      }
+    );
   };
 
   const handleChange = (field: keyof FormData, value: string | number) => {
