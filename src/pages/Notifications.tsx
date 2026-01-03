@@ -4,18 +4,24 @@ import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { useLeaveRequests, useUpdateLeaveStatus } from '@/hooks/useLeaves';
+import { useMockData } from '@/context/MockDataContext';
 import { useToast } from '@/hooks/use-toast';
-import type { LeaveRequest } from '@/types/employee';
+import type { LeaveRequest, NewEmployeeRequest } from '@/types/employee';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { Check, X, Calendar, Loader2 } from 'lucide-react';
+import { Check, X, Calendar, Loader2, UserPlus } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ApproveEmployeeModal } from '@/components/modals/ApproveEmployeeModal';
 
 export default function Notifications() {
   const { data: leaveRequests = [], isLoading, error } = useLeaveRequests();
+  const { newEmployeeRequests, rejectNewEmployee } = useMockData();
   const updateLeaveStatus = useUpdateLeaveStatus();
   const { toast } = useToast();
+  const [selectedRequest, setSelectedRequest] = useState<NewEmployeeRequest | null>(null);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
 
   const pendingLeaves = leaveRequests.filter((l) => l.status === 'pending');
+  const pendingEmployeeRequests = newEmployeeRequests.filter((r) => r.status === 'pending');
 
   const handleApproveLeave = async (id: string, employeeName: string) => {
     try {
@@ -33,6 +39,16 @@ export default function Notifications() {
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to reject', variant: 'destructive' });
     }
+  };
+
+  const handleApproveNewEmployee = (request: NewEmployeeRequest) => {
+    setSelectedRequest(request);
+    setApproveModalOpen(true);
+  };
+
+  const handleRejectNewEmployee = (id: string, name: string) => {
+    rejectNewEmployee(id);
+    toast({ title: 'Request Rejected', description: `Application from ${name} has been rejected.`, variant: 'destructive' });
   };
 
   const leaveColumns = [
@@ -82,6 +98,41 @@ export default function Notifications() {
     },
   ];
 
+  const employeeRequestColumns = [
+    {
+      key: 'applicantName',
+      header: 'Applicant',
+      render: (item: NewEmployeeRequest) => (
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-primary font-medium">{item.employeeData.fullName.split(' ').map((n) => n[0]).join('')}</span>
+          </div>
+          <div>
+            <p className="font-medium text-foreground">{item.employeeData.fullName}</p>
+            <p className="text-sm text-muted-foreground">{item.employeeData.position}</p>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'department', header: 'Department', render: (item: NewEmployeeRequest) => <span>{item.employeeData.department}</span> },
+    { key: 'employmentType', header: 'Type', render: (item: NewEmployeeRequest) => <span className="capitalize">{item.employeeData.employmentType}</span> },
+    { key: 'createdAt', header: 'Applied', render: (item: NewEmployeeRequest) => <span>{format(parseISO(item.createdAt), 'MMM dd, yyyy')}</span> },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (item: NewEmployeeRequest) => (
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveNewEmployee(item); }}>
+            <Check className="w-4 h-4 mr-1" />Approve
+          </Button>
+          <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); handleRejectNewEmployee(item.id, item.employeeData.fullName); }}>
+            <X className="w-4 h-4 mr-1" />Reject
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   if (isLoading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (error) return <div className="flex flex-col items-center justify-center h-64 gap-4"><p className="text-destructive">Failed to load data</p></div>;
 
@@ -94,6 +145,10 @@ export default function Notifications() {
             <Calendar className="w-4 h-4" />Leave Requests
             {pendingLeaves.length > 0 && <span className="ml-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{pendingLeaves.length}</span>}
           </TabsTrigger>
+          <TabsTrigger value="employees" className="flex items-center gap-2">
+            <UserPlus className="w-4 h-4" />New Employees
+            {pendingEmployeeRequests.length > 0 && <span className="ml-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{pendingEmployeeRequests.length}</span>}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="leaves">
           <div className="bg-card rounded-xl border border-border p-6">
@@ -101,7 +156,18 @@ export default function Notifications() {
             <DataTable columns={leaveColumns} data={pendingLeaves} keyExtractor={(item) => item.id} emptyMessage="No pending leave requests" />
           </div>
         </TabsContent>
+        <TabsContent value="employees">
+          <div className="bg-card rounded-xl border border-border p-6">
+            <h2 className="text-lg font-semibold mb-4">Pending Employee Applications</h2>
+            <DataTable columns={employeeRequestColumns} data={pendingEmployeeRequests} keyExtractor={(item) => item.id} emptyMessage="No pending employee applications" />
+          </div>
+        </TabsContent>
       </Tabs>
+      <ApproveEmployeeModal
+        request={selectedRequest}
+        open={approveModalOpen}
+        onOpenChange={setApproveModalOpen}
+      />
     </div>
   );
 }
