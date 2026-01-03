@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Employee } from '@/types/employee';
-import { useMockData } from '@/context/MockDataContext';
+import { useUpdateEmployee } from '@/hooks/useEmployees';
 import { toast } from 'sonner';
 
 interface EmployeeEditModalProps {
@@ -31,7 +31,7 @@ export function EmployeeEditModal({
   open,
   onOpenChange,
 }: EmployeeEditModalProps) {
-  const { updateEmployee } = useMockData();
+  const updateEmployee = useUpdateEmployee();
   const [formData, setFormData] = useState<Partial<Employee>>({});
 
   useEffect(() => {
@@ -42,12 +42,16 @@ export function EmployeeEditModal({
 
   if (!employee) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.id) {
-      updateEmployee(formData.id, formData);
+    if (!formData.id) return;
+
+    try {
+      await updateEmployee.mutateAsync({ id: formData.id, data: formData });
       toast.success('Employee updated successfully');
       onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update employee');
     }
   };
 
@@ -176,7 +180,9 @@ export function EmployeeEditModal({
             >
               Cancel
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={updateEmployee.isPending}>
+              {updateEmployee.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
