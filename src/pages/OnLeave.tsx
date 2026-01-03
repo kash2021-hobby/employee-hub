@@ -4,13 +4,13 @@ import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { Input } from '@/components/ui/input';
-import { useMockData } from '@/context/MockDataContext';
+import { useEmployeesOnLeave } from '@/hooks/useLeaves';
 import type { EmployeeOnLeave } from '@/types/employee';
 import { format, parseISO, isWithinInterval } from 'date-fns';
-import { Search, Calendar, CalendarDays, Users } from 'lucide-react';
+import { Search, Calendar, CalendarDays, Users, Loader2 } from 'lucide-react';
 
 export default function OnLeave() {
-  const { employeesOnLeave } = useMockData();
+  const { data: employeesOnLeave = [], isLoading } = useEmployeesOnLeave();
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -95,6 +95,14 @@ export default function OnLeave() {
       ),
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
