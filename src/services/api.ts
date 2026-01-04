@@ -99,20 +99,20 @@ export const leaveApi = {
     }),
 };
 
-// New Employee Request API (if you add this to your backend later)
+// New Member API - fetches from /api/members endpoint
 export const newEmployeeApi = {
   getAll: (status?: 'pending' | 'approved' | 'rejected') => {
     const query = status ? `?status=${status}` : '';
-    return fetchApi<NewEmployeeRequest[]>(`/api/new-employees${query}`);
+    return fetchApi<NewEmployeeRequest[]>(`/api/members${query}`);
   },
   
   approve: (id: string) =>
-    fetchApi<Employee>(`/api/new-employees/${id}/approve`, {
+    fetchApi<Employee>(`/api/members/${id}/approve`, {
       method: 'POST',
     }),
   
   reject: (id: string) =>
-    fetchApi<void>(`/api/new-employees/${id}/reject`, {
+    fetchApi<void>(`/api/members/${id}/reject`, {
       method: 'POST',
     }),
 };
