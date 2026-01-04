@@ -86,7 +86,10 @@ export function useUpdateLeaveStatus() {
     mutationFn: ({ id, status }: { id: string; status: 'approved' | 'rejected' }) =>
       leaveApi.updateStatus(id, status),
     onSuccess: () => {
+      // Invalidate leaves to update "On Leave" section
       queryClient.invalidateQueries({ queryKey: ['leaves'] });
+      // Invalidate employees to update employee status
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
   });
 }
