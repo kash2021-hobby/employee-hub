@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday } from 'date-fns';
 import type { LeaveRequest, AttendanceRecord } from '@/types/employee';
 
 export default function Dashboard() {
@@ -25,19 +25,25 @@ export default function Dashboard() {
 
   const isLoading = loadingEmployees || loadingAttendance || loadingLeaves;
 
+  // Filter attendance records for today only
+  const todayAttendanceRecords = attendance.filter((a) => {
+    if (!a.date) return false;
+    return isToday(parseISO(a.date));
+  });
+
   const stats = {
     totalEmployees: employees.length,
     activeEmployees: employees.filter((e) => e.status === 'active').length,
     onLeaveToday: leaveRequests.filter((l) => l.status === 'approved').length,
     pendingLeaveRequests: leaveRequests.filter((l) => l.status === 'pending').length,
     pendingNewEmployees: 0,
-    presentToday: attendance.filter((a) => a.status === 'present').length,
-    lateToday: attendance.filter((a) => a.status === 'late').length,
-    absentToday: attendance.filter((a) => a.status === 'absent').length,
+    presentToday: todayAttendanceRecords.filter((a) => a.status === 'present').length,
+    lateToday: todayAttendanceRecords.filter((a) => a.status === 'late').length,
+    absentToday: todayAttendanceRecords.filter((a) => a.status === 'absent').length,
   };
 
   const pendingLeaves = leaveRequests.filter((l) => l.status === 'pending').slice(0, 5);
-  const todayAttendance = attendance.slice(0, 5);
+  const todayAttendance = todayAttendanceRecords.slice(0, 5);
 
   const leaveColumns = [
     { key: 'employeeName', header: 'Employee' },
