@@ -24,18 +24,18 @@ export default function Notifications() {
   const pendingLeaves = leaveRequests.filter((l) => l.status === 'pending');
   const pendingEmployeeRequests = newEmployeeRequests.filter((r) => r.status === 'pending');
 
-  const handleApproveLeave = async (id: string, employeeName: string) => {
+  const handleApproveLeave = async (id: string, employeeId: string, employeeName: string) => {
     try {
-      await updateLeaveStatus.mutateAsync({ id, status: 'approved' });
+      await updateLeaveStatus.mutateAsync({ id, status: 'approved', employeeId });
       toast({ title: 'Leave Approved', description: `Leave request for ${employeeName} has been approved.` });
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to approve', variant: 'destructive' });
     }
   };
 
-  const handleRejectLeave = async (id: string, employeeName: string) => {
+  const handleRejectLeave = async (id: string, employeeId: string, employeeName: string) => {
     try {
-      await updateLeaveStatus.mutateAsync({ id, status: 'rejected' });
+      await updateLeaveStatus.mutateAsync({ id, status: 'rejected', employeeId });
       toast({ title: 'Leave Rejected', description: `Leave request for ${employeeName} has been rejected.`, variant: 'destructive' });
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to reject', variant: 'destructive' });
@@ -92,10 +92,10 @@ export default function Notifications() {
       header: 'Actions',
       render: (item: LeaveRequest) => (
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveLeave(item.id, item.employeeName); }} disabled={updateLeaveStatus.isPending}>
+          <Button size="sm" onClick={(e) => { e.stopPropagation(); handleApproveLeave(item.id, item.employeeId, item.employeeName); }} disabled={updateLeaveStatus.isPending}>
             <Check className="w-4 h-4 mr-1" />Approve
           </Button>
-          <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); handleRejectLeave(item.id, item.employeeName); }} disabled={updateLeaveStatus.isPending}>
+          <Button size="sm" variant="destructive" onClick={(e) => { e.stopPropagation(); handleRejectLeave(item.id, item.employeeId, item.employeeName); }} disabled={updateLeaveStatus.isPending}>
             <X className="w-4 h-4 mr-1" />Reject
           </Button>
         </div>
