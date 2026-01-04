@@ -7,9 +7,9 @@ function transformNewEmployeeRequest(data: any): NewEmployeeRequest {
   return {
     id: data.id,
     employeeData: {
-      fullName: data.full_name,
+      fullName: data.name || data.full_name || '',
       dateOfBirth: data.dob || '',
-      joiningDate: data.joining_date,
+      joiningDate: data.joining_date || '',
       employmentType: data.employment_type,
       workRate: {
         value: parseFloat(data.work_rate) || 0,
@@ -22,7 +22,7 @@ function transformNewEmployeeRequest(data: any): NewEmployeeRequest {
         start: data.work_hours_start || '09:00',
         end: data.work_hours_end || '17:00',
       },
-      phoneNumber: data.phone || '',
+      phoneNumber: data.number || data.phone || '',
       idProofType: data.id_proof_type || 'national-id',
       idProofNumber: data.id_proof_number || '',
       allowedLeaves: data.allowed_leaves || 12,
