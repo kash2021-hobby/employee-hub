@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { leaveApi } from '@/services/api';
+import { leaveApi, employeeApi } from '@/services/api';
 import type { LeaveRequest, EmployeeOnLeave } from '@/types/employee';
 
 // Transform snake_case API response to camelCase frontend type
@@ -83,8 +83,17 @@ export function useUpdateLeaveStatus() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: 'approved' | 'rejected' }) =>
-      leaveApi.updateStatus(id, status),
+    mutationFn: async ({ id, status, employeeId }: { id: string; status: 'approved' | 'rejected'; employeeId: string }) => {
+      // Update leave status
+      const result = await leaveApi.updateStatus(id, status);
+      
+      // Update employee status via PUT /api/employees/:id
+      if (status === 'approved') {
+        await employeeApi.update(employeeId, { status: 'on-leave' });
+      }
+      
+      return result;
+    },
     onSuccess: () => {
       // Invalidate leaves to update "On Leave" section
       queryClient.invalidateQueries({ queryKey: ['leaves'] });
