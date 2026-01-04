@@ -48,7 +48,7 @@ export function EmployeeDetailsModal({
   onOpenChange,
 }: EmployeeDetailsModalProps) {
   const { data: attendance = [] } = useAttendance();
-  const [selectedMonth, setSelectedMonth] = useState(new Date(2024, 11)); // December 2024
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
 
   if (!employee) return null;
 
