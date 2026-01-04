@@ -106,22 +106,16 @@ export default function Notifications() {
   const employeeRequestColumns = [
     {
       key: 'applicantName',
-      header: 'Applicant',
+      header: 'Name',
       render: (item: NewEmployeeRequest) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium">{item.employeeData.fullName.split(' ').map((n) => n[0]).join('')}</span>
-          </div>
-          <div>
-            <p className="font-medium text-foreground">{item.employeeData.fullName}</p>
-            <p className="text-sm text-muted-foreground">{item.employeeData.position}</p>
-          </div>
-        </div>
+        <span className="font-medium text-foreground">{item.employeeData.fullName}</span>
       ),
     },
-    { key: 'department', header: 'Department', render: (item: NewEmployeeRequest) => <span>{item.employeeData.department}</span> },
-    { key: 'employmentType', header: 'Type', render: (item: NewEmployeeRequest) => <span className="capitalize">{item.employeeData.employmentType}</span> },
-    { key: 'createdAt', header: 'Applied', render: (item: NewEmployeeRequest) => <span>{format(parseISO(item.createdAt), 'MMM dd, yyyy')}</span> },
+    { 
+      key: 'phone', 
+      header: 'Phone Number', 
+      render: (item: NewEmployeeRequest) => <span>{item.employeeData.phoneNumber || '-'}</span> 
+    },
     {
       key: 'actions',
       header: 'Actions',
