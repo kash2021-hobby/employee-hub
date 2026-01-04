@@ -87,7 +87,7 @@ export function useRejectNewEmployee() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (id: string) => newEmployeeApi.reject(id),
+    mutationFn: (id: string) => newEmployeeApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['new-employees'] });
     },
