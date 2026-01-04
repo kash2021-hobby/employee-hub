@@ -71,12 +71,8 @@ export function useApproveNewEmployee() {
       // Create employee
       await employeeApi.create(apiData);
       
-      // Try to approve the new employee request (if your API supports it)
-      try {
-        await newEmployeeApi.approve(id);
-      } catch {
-        // If the approve endpoint doesn't exist, just continue
-      }
+      // Delete the new member from the members table
+      await newEmployeeApi.delete(id);
       
       return { success: true };
     },

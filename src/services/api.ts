@@ -115,6 +115,11 @@ export const newEmployeeApi = {
     fetchApi<void>(`/api/members/${id}/reject`, {
       method: 'POST',
     }),
+  
+  delete: (id: string) =>
+    fetchApi<{ message: string }>(`/api/members/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 // Holiday API
