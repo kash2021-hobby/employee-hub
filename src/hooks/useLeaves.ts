@@ -50,14 +50,9 @@ export function useEmployeesOnLeave() {
     queryKey: ['leaves', 'on-leave'],
     queryFn: async () => {
       const data = await leaveApi.getAll();
-      // Filter only approved leaves that are currently active
-      const today = new Date().toISOString().split('T')[0];
-      const activeLeaves = data.filter((leave: any) => 
-        leave.status === 'approved' && 
-        leave.start_date <= today && 
-        leave.end_date >= today
-      );
-      return activeLeaves.map(transformToEmployeeOnLeave);
+      // Filter only approved leaves
+      const approvedLeaves = data.filter((leave: any) => leave.status === 'approved');
+      return approvedLeaves.map(transformToEmployeeOnLeave);
     },
   });
 }
