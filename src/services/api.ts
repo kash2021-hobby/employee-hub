@@ -7,10 +7,8 @@ import type {
   EmployeeOnLeave,
 } from '@/types/employee';
 
-// Base API URL - Configure this to your backend server
-// For local development: http://localhost:3000
-// For production: https://your-production-server.com
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+// Base API URL - Hostinger production server
+const API_BASE_URL = 'https://antiquewhite-wren-292081.hostingersite.com';
 
 // Get auth token from localStorage
 function getAuthToken(): string | null {
