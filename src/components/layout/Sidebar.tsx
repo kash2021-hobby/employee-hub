@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users,
   Clock,
@@ -10,10 +10,12 @@ import {
   ChevronRight,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   {
@@ -56,7 +58,14 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -130,6 +139,17 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             })}
           </ul>
         </nav>
+
+        {/* Logout Button */}
+        <div className="p-3 border-t border-sidebar-border">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-4 py-2 text-sidebar-muted hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+          >
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {(!collapsed || isMobile) && <span>Logout</span>}
+          </button>
+        </div>
 
         {/* Collapse Button - Desktop only */}
         {!isMobile && (
