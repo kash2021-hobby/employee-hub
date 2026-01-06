@@ -27,66 +27,23 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route
-              path="/"
+              path="/*"
               element={
                 <ProtectedRoute>
                   <DashboardLayout>
-                    <Index />
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/employees" element={<Employees />} />
+                      <Route path="/attendance" element={<Attendance />} />
+                      <Route path="/notifications" element={<Notifications />} />
+                      <Route path="/on-leave" element={<OnLeave />} />
+                      <Route path="/holidays" element={<Holidays />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
                   </DashboardLayout>
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/employees"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Employees />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/attendance"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Attendance />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/notifications"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Notifications />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/on-leave"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <OnLeave />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/holidays"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Holidays />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
