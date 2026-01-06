@@ -67,7 +67,7 @@ export function useCreateLeaveRequest() {
       start_date: string;
       end_date: string;
       reason?: string;
-    }) => leaveApi.create(data),
+    }) => leaveApi.create(data as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leaves'] });
     },
