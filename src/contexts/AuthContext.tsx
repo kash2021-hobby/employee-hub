@@ -24,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session)
       setUser(data.session?.user ?? null)
       setIsLoading(false)
+    }).catch(() => {
+      setIsLoading(false)
     })
 
     // Listen to auth changes
