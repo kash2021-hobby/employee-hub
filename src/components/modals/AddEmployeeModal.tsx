@@ -64,6 +64,14 @@ const initialFormData: FormData = {
   address: '',
 };
 
+// Shift timing configuration
+const shiftTimings: Record<ShiftType, { start: string; end: string }> = {
+  morning: { start: '09:00', end: '17:00' },
+  evening: { start: '14:00', end: '22:00' },
+  night: { start: '22:00', end: '06:00' },
+  custom: { start: '09:00', end: '17:00' },
+};
+
 export function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModalProps) {
   const createEmployee = useCreateEmployee();
   const { toast } = useToast();
@@ -75,6 +83,17 @@ export function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModalProps) 
       case 'daily': return 'day';
       case 'weekly': return 'week';
     }
+  };
+
+  // Handle shift change and auto-set work hours
+  const handleShiftChange = (shift: ShiftType) => {
+    const timing = shiftTimings[shift];
+    setFormData((prev) => ({
+      ...prev,
+      shift,
+      workHoursStart: timing.start,
+      workHoursEnd: timing.end,
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -328,36 +347,46 @@ export function AddEmployeeModal({ open, onOpenChange }: AddEmployeeModalProps) 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="shift">Shift *</Label>
-                  <Select value={formData.shift} onValueChange={(value) => handleChange('shift', value as ShiftType)}>
+                  <Select value={formData.shift} onValueChange={(value) => handleShiftChange(value as ShiftType)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="morning">Morning</SelectItem>
-                      <SelectItem value="evening">Evening</SelectItem>
-                      <SelectItem value="night">Night</SelectItem>
+                      <SelectItem value="morning">Morning (9:00 - 17:00)</SelectItem>
+                      <SelectItem value="evening">Evening (14:00 - 22:00)</SelectItem>
+                      <SelectItem value="night">Night (22:00 - 06:00)</SelectItem>
                       <SelectItem value="custom">Custom</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="workHoursStart">Work Hours Start *</Label>
-                  <Input
-                    id="workHoursStart"
-                    type="time"
-                    value={formData.workHoursStart}
-                    onChange={(e) => handleChange('workHoursStart', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="workHoursEnd">Work Hours End *</Label>
-                  <Input
-                    id="workHoursEnd"
-                    type="time"
-                    value={formData.workHoursEnd}
-                    onChange={(e) => handleChange('workHoursEnd', e.target.value)}
-                  />
-                </div>
+                {formData.shift === 'custom' ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="workHoursStart">Work Hours Start *</Label>
+                      <Input
+                        id="workHoursStart"
+                        type="time"
+                        value={formData.workHoursStart}
+                        onChange={(e) => handleChange('workHoursStart', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="workHoursEnd">Work Hours End *</Label>
+                      <Input
+                        id="workHoursEnd"
+                        type="time"
+                        value={formData.workHoursEnd}
+                        onChange={(e) => handleChange('workHoursEnd', e.target.value)}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="sm:col-span-2 flex items-end">
+                    <p className="text-sm text-muted-foreground">
+                      Work Hours: <span className="font-medium text-foreground">{formData.workHoursStart} - {formData.workHoursEnd}</span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </form>
