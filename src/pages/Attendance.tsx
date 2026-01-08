@@ -41,10 +41,12 @@ export default function Attendance() {
     return matchesSearch && matchesStatus && matchesDate;
   });
 
-  // Calculate stats
+  // Calculate stats - late employees are also counted as present
+  const lateCount = filteredAttendance.filter((a) => a.status === 'late').length;
+  const presentOnTimeCount = filteredAttendance.filter((a) => a.status === 'present').length;
   const stats = {
-    present: filteredAttendance.filter((a) => a.status === 'present').length,
-    late: filteredAttendance.filter((a) => a.status === 'late').length,
+    present: presentOnTimeCount + lateCount, // Late employees are still present
+    late: lateCount,
     absent: filteredAttendance.filter((a) => a.status === 'absent').length,
     onLeave: filteredAttendance.filter((a) => a.status === 'on-leave').length,
   };
