@@ -52,26 +52,38 @@ function transformAttendance(data: any, employeesMap: Map<string, Employee>): At
   };
 }
 
+// Map shift type to default start time
+function getShiftStartTime(shift: string | null): string | null {
+  if (!shift) return null;
+  const shiftMap: Record<string, string> = {
+    morning: '09:00',
+    evening: '14:00',
+    night: '22:00',
+  };
+  return shiftMap[shift.toLowerCase()] || null;
+}
+
 // Transform employee API response
 function transformEmployee(data: any): Employee {
+  const shiftStart = getShiftStartTime(data.shift);
   return {
     id: data.id,
     fullName: data.full_name,
-    dateOfBirth: data.date_of_birth,
+    dateOfBirth: data.date_of_birth || data.dob,
     joiningDate: data.joining_date,
     employmentType: data.employment_type,
     workRate: {
-      value: parseFloat(data.work_rate_value) || 0,
+      value: parseFloat(data.work_rate) || 0,
       unit: data.work_rate_unit || 'hour',
     },
     position: data.position,
     department: data.department,
     shift: data.shift,
     workHours: {
-      start: data.work_hours_start,
+      start: data.work_hours_start || shiftStart,
       end: data.work_hours_end,
     },
-    phoneNumber: data.phone_number,
+    phoneNumber: data.phone_number || data.phone,
     idProofType: data.id_proof_type,
     idProofNumber: data.id_proof_number,
     allowedLeaves: data.allowed_leaves || 0,
