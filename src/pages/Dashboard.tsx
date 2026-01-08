@@ -31,14 +31,17 @@ export default function Dashboard() {
     return isToday(parseISO(a.date));
   });
 
+  const lateToday = todayAttendanceRecords.filter((a) => a.status === 'late').length;
+  const presentOnTime = todayAttendanceRecords.filter((a) => a.status === 'present').length;
+  
   const stats = {
     totalEmployees: employees.length,
     activeEmployees: employees.filter((e) => e.status === 'active').length,
     onLeaveToday: leaveRequests.filter((l) => l.status === 'approved').length,
     pendingLeaveRequests: leaveRequests.filter((l) => l.status === 'pending').length,
     pendingNewEmployees: 0,
-    presentToday: todayAttendanceRecords.filter((a) => a.status === 'present').length,
-    lateToday: todayAttendanceRecords.filter((a) => a.status === 'late').length,
+    presentToday: presentOnTime + lateToday, // Late employees are still present
+    lateToday: lateToday,
     absentToday: todayAttendanceRecords.filter((a) => a.status === 'absent').length,
   };
 
