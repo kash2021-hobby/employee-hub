@@ -4,8 +4,8 @@ import type { AttendanceRecord, AttendanceStatus, Employee } from '@/types/emplo
 
 export interface AttendanceWithBreaks extends AttendanceRecord {
   breakHours: number;
-  availableHours: number;
-  workingHours: number;
+  availableHours: number | null;
+  workingHours: number | null;
 }
 
 // Determine if employee is late based on sign-in time vs shift start
@@ -103,6 +103,15 @@ function transformEmployee(data: any): Employee {
   };
 }
 
+function getBreakMinutes(b: BreakRecord): number {
+  if (typeof b.duration_minutes === 'number' && b.duration_minutes > 0) return b.duration_minutes;
+  if (b.start_time && b.end_time) {
+    const diffMs = new Date(b.end_time).getTime() - new Date(b.start_time).getTime();
+    return Math.max(0, diffMs / 60000);
+  }
+  return 0;
+}
+
 export function useAttendance() {
   return useQuery({
     queryKey: ['attendance'],
@@ -126,17 +135,27 @@ export function useAttendance() {
       breaksData.forEach((breakRecord: BreakRecord) => {
         const key = `${breakRecord.employee_id}_${breakRecord.date}`;
         const existingBreakHours = breaksByEmployeeDate.get(key) || 0;
-        const breakDuration = breakRecord.duration_minutes || 0; // duration in minutes
-        breaksByEmployeeDate.set(key, existingBreakHours + (breakDuration / 60));
+        const breakMinutes = getBreakMinutes(breakRecord);
+        breaksByEmployeeDate.set(key, existingBreakHours + (breakMinutes / 60));
       });
       
       return attendanceData.map((record: any) => {
         const baseRecord = transformAttendance(record, employeesMap);
         const key = `${record.employee_id}_${record.date}`;
         const breakHours = breaksByEmployeeDate.get(key) || 0;
-        const availableHours = baseRecord.totalWorkingHours || 0;
-        const workingHours = Math.max(0, availableHours - breakHours);
-        
+
+        const availableHours =
+          baseRecord.signInTime && baseRecord.signOutTime
+            ? Math.max(
+                0,
+                (new Date(baseRecord.signOutTime).getTime() -
+                  new Date(baseRecord.signInTime).getTime()) /
+                  3600000
+              )
+            : null;
+
+        const workingHours = availableHours === null ? null : Math.max(0, availableHours - breakHours);
+
         return {
           ...baseRecord,
           breakHours,

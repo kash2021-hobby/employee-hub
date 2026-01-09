@@ -50,21 +50,12 @@ export default function Attendance() {
     onLeave: filteredAttendance.filter((a) => a.status === 'on-leave').length,
   };
 
-  const formatHours = (hours: number) => {
-    if (hours === 0) return '-';
+  const formatHours = (hours: number | null) => {
+    if (hours === null) return '-';
     const h = Math.floor(hours);
     const m = Math.round((hours - h) * 60);
     return `${h}h ${m}m`;
   };
-
-  const calculateAvailableHours = (signIn: string | null, signOut: string | null) => {
-    if (!signIn || !signOut) return '-';
-    const minutes = differenceInMinutes(new Date(signOut), new Date(signIn));
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
-  };
-
   const calculateDailyPay = (record: AttendanceWithBreaks) => {
     const employee = employees.find((e) => e.id === record.employeeId);
     if (!employee || !record.signInTime || !record.signOutTime) return null;
@@ -126,8 +117,7 @@ export default function Attendance() {
     {
       key: 'availableHours',
       header: 'Available Hours',
-      render: (record: AttendanceWithBreaks) =>
-        calculateAvailableHours(record.signInTime, record.signOutTime),
+      render: (record: AttendanceWithBreaks) => formatHours(record.availableHours),
     },
     {
       key: 'breakHours',
