@@ -154,6 +154,20 @@ export const employeesOnLeaveApi = {
   getAll: () => fetchApi<EmployeeOnLeave[]>('/api/leaves?status=approved'),
 };
 
+// Break Records API
+export interface BreakRecord {
+  id: string;
+  attendance_id: string;
+  employee_id: string;
+  break_start: string;
+  break_end: string | null;
+  duration: number | null;
+}
+
+export const breakApi = {
+  getAll: () => fetchApi<BreakRecord[]>('/api/breaks'),
+};
+
 // Dashboard Stats API
 export interface DashboardStats {
   totalEmployees: number;

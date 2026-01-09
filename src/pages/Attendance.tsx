@@ -4,9 +4,8 @@ import { DataTable } from '@/components/ui/DataTable';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { Input } from '@/components/ui/input';
-import { useAttendance } from '@/hooks/useAttendance';
+import { useAttendance, type AttendanceWithBreaks } from '@/hooks/useAttendance';
 import { useEmployees } from '@/hooks/useEmployees';
-import type { AttendanceRecord } from '@/types/employee';
 import { format, parseISO, differenceInMinutes } from 'date-fns';
 import {
   Search,
@@ -51,7 +50,14 @@ export default function Attendance() {
     onLeave: filteredAttendance.filter((a) => a.status === 'on-leave').length,
   };
 
-  const calculateWorkingHours = (signIn: string | null, signOut: string | null) => {
+  const formatHours = (hours: number) => {
+    if (hours === 0) return '-';
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${h}h ${m}m`;
+  };
+
+  const calculateAvailableHours = (signIn: string | null, signOut: string | null) => {
     if (!signIn || !signOut) return '-';
     const minutes = differenceInMinutes(new Date(signOut), new Date(signIn));
     const hours = Math.floor(minutes / 60);
@@ -59,7 +65,7 @@ export default function Attendance() {
     return `${hours}h ${mins}m`;
   };
 
-  const calculateDailyPay = (record: AttendanceRecord) => {
+  const calculateDailyPay = (record: AttendanceWithBreaks) => {
     const employee = employees.find((e) => e.id === record.employeeId);
     if (!employee || !record.signInTime || !record.signOutTime) return null;
 
@@ -86,7 +92,7 @@ export default function Attendance() {
     {
       key: 'employeeName',
       header: 'Employee',
-      render: (record: AttendanceRecord) => (
+      render: (record: AttendanceWithBreaks) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <span className="text-primary font-medium">
@@ -103,35 +109,45 @@ export default function Attendance() {
     {
       key: 'date',
       header: 'Date',
-      render: (record: AttendanceRecord) => format(parseISO(record.date), 'MMM dd, yyyy'),
+      render: (record: AttendanceWithBreaks) => format(parseISO(record.date), 'MMM dd, yyyy'),
     },
     {
       key: 'signInTime',
       header: 'Sign In',
-      render: (record: AttendanceRecord) =>
+      render: (record: AttendanceWithBreaks) =>
         record.signInTime ? format(new Date(record.signInTime), 'hh:mm a') : '-',
     },
     {
       key: 'signOutTime',
       header: 'Sign Out',
-      render: (record: AttendanceRecord) =>
+      render: (record: AttendanceWithBreaks) =>
         record.signOutTime ? format(new Date(record.signOutTime), 'hh:mm a') : '-',
     },
     {
-      key: 'totalWorkingHours',
+      key: 'availableHours',
+      header: 'Available Hours',
+      render: (record: AttendanceWithBreaks) =>
+        calculateAvailableHours(record.signInTime, record.signOutTime),
+    },
+    {
+      key: 'breakHours',
+      header: 'Break Hours',
+      render: (record: AttendanceWithBreaks) => formatHours(record.breakHours),
+    },
+    {
+      key: 'workingHours',
       header: 'Working Hours',
-      render: (record: AttendanceRecord) =>
-        calculateWorkingHours(record.signInTime, record.signOutTime),
+      render: (record: AttendanceWithBreaks) => formatHours(record.workingHours),
     },
     {
       key: 'status',
       header: 'Status',
-      render: (record: AttendanceRecord) => <StatusBadge status={record.status} />,
+      render: (record: AttendanceWithBreaks) => <StatusBadge status={record.status} />,
     },
     {
       key: 'dailyPay',
       header: 'Daily Pay',
-      render: (record: AttendanceRecord) => {
+      render: (record: AttendanceWithBreaks) => {
         const pay = calculateDailyPay(record);
         if (pay === null) return <span className="text-muted-foreground">-</span>;
         return (
