@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { attendanceApi, employeeApi } from '@/services/api';
+import { attendanceApi, employeeApi, breakApi, type BreakRecord } from '@/services/api';
 import type { AttendanceRecord, AttendanceStatus, Employee } from '@/types/employee';
+
+export interface AttendanceWithBreaks extends AttendanceRecord {
+  breakHours: number;
+  availableHours: number;
+  workingHours: number;
+}
 
 // Determine if employee is late based on sign-in time vs shift start
 function determineStatus(signIn: string | null, shiftStart: string | null, existingStatus: string): AttendanceStatus {
@@ -100,11 +106,12 @@ function transformEmployee(data: any): Employee {
 export function useAttendance() {
   return useQuery({
     queryKey: ['attendance'],
-    queryFn: async () => {
-      // Fetch both attendance and employees in parallel
-      const [attendanceData, employeesData] = await Promise.all([
+    queryFn: async (): Promise<AttendanceWithBreaks[]> => {
+      // Fetch attendance, employees, and breaks in parallel
+      const [attendanceData, employeesData, breaksData] = await Promise.all([
         attendanceApi.getAll(),
         employeeApi.getAll(),
+        breakApi.getAll().catch(() => [] as BreakRecord[]), // Gracefully handle if breaks API fails
       ]);
       
       // Create a map of employee ID to employee for quick lookup
@@ -114,7 +121,27 @@ export function useAttendance() {
         employeesMap.set(transformed.id, transformed);
       });
       
-      return attendanceData.map((record: any) => transformAttendance(record, employeesMap));
+      // Create a map of attendance_id to total break hours
+      const breaksByAttendanceId = new Map<string, number>();
+      breaksData.forEach((breakRecord: BreakRecord) => {
+        const existingBreakHours = breaksByAttendanceId.get(breakRecord.attendance_id) || 0;
+        const breakDuration = breakRecord.duration || 0; // duration in minutes
+        breaksByAttendanceId.set(breakRecord.attendance_id, existingBreakHours + (breakDuration / 60));
+      });
+      
+      return attendanceData.map((record: any) => {
+        const baseRecord = transformAttendance(record, employeesMap);
+        const breakHours = breaksByAttendanceId.get(record.id) || 0;
+        const availableHours = baseRecord.totalWorkingHours || 0;
+        const workingHours = Math.max(0, availableHours - breakHours);
+        
+        return {
+          ...baseRecord,
+          breakHours,
+          availableHours,
+          workingHours,
+        };
+      });
     },
   });
 }
