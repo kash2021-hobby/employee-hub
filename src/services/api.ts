@@ -157,11 +157,12 @@ export const employeesOnLeaveApi = {
 // Break Records API
 export interface BreakRecord {
   id: string;
-  attendance_id: string;
   employee_id: string;
-  break_start: string;
-  break_end: string | null;
-  duration: number | null;
+  date: string;
+  start_time: string;
+  end_time: string | null;
+  duration_minutes: number;
+  type: string;
 }
 
 export const breakApi = {

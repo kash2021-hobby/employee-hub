@@ -121,17 +121,19 @@ export function useAttendance() {
         employeesMap.set(transformed.id, transformed);
       });
       
-      // Create a map of attendance_id to total break hours
-      const breaksByAttendanceId = new Map<string, number>();
+      // Create a map of employee_id + date to total break hours
+      const breaksByEmployeeDate = new Map<string, number>();
       breaksData.forEach((breakRecord: BreakRecord) => {
-        const existingBreakHours = breaksByAttendanceId.get(breakRecord.attendance_id) || 0;
-        const breakDuration = breakRecord.duration || 0; // duration in minutes
-        breaksByAttendanceId.set(breakRecord.attendance_id, existingBreakHours + (breakDuration / 60));
+        const key = `${breakRecord.employee_id}_${breakRecord.date}`;
+        const existingBreakHours = breaksByEmployeeDate.get(key) || 0;
+        const breakDuration = breakRecord.duration_minutes || 0; // duration in minutes
+        breaksByEmployeeDate.set(key, existingBreakHours + (breakDuration / 60));
       });
       
       return attendanceData.map((record: any) => {
         const baseRecord = transformAttendance(record, employeesMap);
-        const breakHours = breaksByAttendanceId.get(record.id) || 0;
+        const key = `${record.employee_id}_${record.date}`;
+        const breakHours = breaksByEmployeeDate.get(key) || 0;
         const availableHours = baseRecord.totalWorkingHours || 0;
         const workingHours = Math.max(0, availableHours - breakHours);
         
