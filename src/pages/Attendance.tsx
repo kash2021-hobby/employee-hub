@@ -6,7 +6,8 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Input } from '@/components/ui/input';
 import { useAttendance, type AttendanceWithBreaks } from '@/hooks/useAttendance';
 import { useEmployees } from '@/hooks/useEmployees';
-import { format, parseISO, differenceInMinutes } from 'date-fns';
+import { useLeaveRequests } from '@/hooks/useLeaves';
+import { format, parseISO, differenceInMinutes, isWithinInterval } from 'date-fns';
 import {
   Search,
   Calendar,
@@ -26,6 +27,7 @@ import {
 export default function Attendance() {
   const { data: attendance = [], isLoading, error } = useAttendance();
   const { data: employees = [] } = useEmployees();
+  const { data: leaveRequests = [] } = useLeaveRequests();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -43,11 +45,26 @@ export default function Attendance() {
   // Calculate stats - late employees are also counted as present
   const lateCount = filteredAttendance.filter((a) => a.status === 'late').length;
   const presentOnTimeCount = filteredAttendance.filter((a) => a.status === 'present').length;
+  const presentCount = presentOnTimeCount + lateCount;
+
+  // Calculate on-leave for selected date from approved leave requests
+  const selectedDateObj = parseISO(selectedDate);
+  const onLeaveCount = leaveRequests.filter((leave) => {
+    if (leave.status !== 'approved') return false;
+    const start = parseISO(leave.startDate);
+    const end = parseISO(leave.endDate);
+    return isWithinInterval(selectedDateObj, { start, end });
+  }).length;
+
+  // Calculate absent: active employees - present - on leave
+  const activeEmployees = employees.filter((e) => e.status === 'active').length;
+  const absentCount = Math.max(0, activeEmployees - presentCount - onLeaveCount);
+
   const stats = {
-    present: presentOnTimeCount + lateCount, // Late employees are still present
+    present: presentCount,
     late: lateCount,
-    absent: filteredAttendance.filter((a) => a.status === 'absent').length,
-    onLeave: filteredAttendance.filter((a) => a.status === 'on-leave').length,
+    absent: absentCount,
+    onLeave: onLeaveCount,
   };
 
   const formatHours = (hours: number | null) => {
