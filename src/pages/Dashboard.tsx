@@ -15,7 +15,7 @@ import {
   AlertTriangle,
   Loader2,
 } from 'lucide-react';
-import { format, parseISO, isToday } from 'date-fns';
+import { format, parseISO, isToday, isWithinInterval } from 'date-fns';
 import type { LeaveRequest, AttendanceRecord } from '@/types/employee';
 
 export default function Dashboard() {
@@ -36,7 +36,15 @@ export default function Dashboard() {
   
   const activeEmployees = employees.filter((e) => e.status === 'active').length;
   const presentToday = presentOnTime + lateToday;
-  const onLeaveToday = leaveRequests.filter((l) => l.status === 'approved').length;
+  
+  // Calculate on-leave for today: approved leaves that include today's date
+  const today = new Date();
+  const onLeaveToday = leaveRequests.filter((l) => {
+    if (l.status !== 'approved') return false;
+    const start = parseISO(l.startDate);
+    const end = parseISO(l.endDate);
+    return isWithinInterval(today, { start, end });
+  }).length;
   
   // Absent = Active employees who haven't signed in and aren't on approved leave
   const absentToday = Math.max(0, activeEmployees - presentToday - onLeaveToday);
