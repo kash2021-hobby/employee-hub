@@ -34,15 +34,22 @@ export default function Dashboard() {
   const lateToday = todayAttendanceRecords.filter((a) => a.status === 'late').length;
   const presentOnTime = todayAttendanceRecords.filter((a) => a.status === 'present').length;
   
+  const activeEmployees = employees.filter((e) => e.status === 'active').length;
+  const presentToday = presentOnTime + lateToday;
+  const onLeaveToday = leaveRequests.filter((l) => l.status === 'approved').length;
+  
+  // Absent = Active employees who haven't signed in and aren't on approved leave
+  const absentToday = Math.max(0, activeEmployees - presentToday - onLeaveToday);
+
   const stats = {
     totalEmployees: employees.length,
-    activeEmployees: employees.filter((e) => e.status === 'active').length,
-    onLeaveToday: leaveRequests.filter((l) => l.status === 'approved').length,
+    activeEmployees,
+    onLeaveToday,
     pendingLeaveRequests: leaveRequests.filter((l) => l.status === 'pending').length,
     pendingNewEmployees: 0,
-    presentToday: presentOnTime + lateToday, // Late employees are still present
-    lateToday: lateToday,
-    absentToday: todayAttendanceRecords.filter((a) => a.status === 'absent').length,
+    presentToday,
+    lateToday,
+    absentToday,
   };
 
   const pendingLeaves = leaveRequests.filter((l) => l.status === 'pending').slice(0, 5);
