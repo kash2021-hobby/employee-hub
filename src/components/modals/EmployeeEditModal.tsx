@@ -105,6 +105,16 @@ export function EmployeeEditModal({
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email || ''}
+                onChange={(e) => handleChange('email', e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="employmentType">Employment Type</Label>
               <Select
                 value={formData.employmentType}
