@@ -49,6 +49,7 @@ function transformToApi(data: Partial<Employee>): any {
   if (data.phoneNumber !== undefined) result.phone = data.phoneNumber;
   if (data.allowedLeaves !== undefined) result.allowed_leaves = data.allowedLeaves;
   if (data.status !== undefined) result.status = data.status;
+  if (data.email !== undefined) result.email = data.email;
   return result;
 }
 
