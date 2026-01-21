@@ -42,14 +42,25 @@ function transformToApi(data: Partial<Employee>): any {
   if (data.dateOfBirth !== undefined) result.dob = data.dateOfBirth;
   if (data.joiningDate !== undefined) result.joining_date = data.joiningDate;
   if (data.employmentType !== undefined) result.employment_type = data.employmentType;
-  if (data.workRate !== undefined) result.work_rate = data.workRate.value;
+  if (data.workRate !== undefined) {
+    result.work_rate = data.workRate.value;
+    result.work_rate_unit = data.workRate.unit;
+  }
   if (data.position !== undefined) result.position = data.position;
   if (data.department !== undefined) result.department = data.department;
   if (data.shift !== undefined) result.shift = data.shift;
+  if (data.workHours !== undefined) {
+    result.work_hours_start = data.workHours.start;
+    result.work_hours_end = data.workHours.end;
+  }
   if (data.phoneNumber !== undefined) result.phone = data.phoneNumber;
+  if (data.idProofType !== undefined) result.id_proof_type = data.idProofType;
+  if (data.idProofNumber !== undefined) result.id_proof_number = data.idProofNumber;
   if (data.allowedLeaves !== undefined) result.allowed_leaves = data.allowedLeaves;
+  if (data.takenLeaves !== undefined) result.taken_leaves = data.takenLeaves;
   if (data.status !== undefined) result.status = data.status;
   if (data.email !== undefined) result.email = data.email;
+  if (data.address !== undefined) result.address = data.address;
   return result;
 }
 
