@@ -137,29 +137,6 @@ export function ApproveEmployeeModal({ request, open, onOpenChange }: ApproveEmp
     try {
       await approveEmployee.mutateAsync({
         id: request.id,
-        employeeData: {
-          fullName: formData.fullName.trim(),
-          dateOfBirth: formData.dateOfBirth,
-          joiningDate: formData.joiningDate,
-          employmentType: formData.employmentType,
-          workRate: {
-            value: formData.workRateValue,
-            unit: getWorkRateUnit(formData.employmentType),
-          },
-          position: formData.position.trim(),
-          department: formData.department.trim(),
-          shift: formData.shift,
-          workHours: {
-            start: formData.workHoursStart,
-            end: formData.workHoursEnd,
-          },
-          phoneNumber: formData.phoneNumber.trim(),
-          idProofType: formData.idProofType,
-          idProofNumber: formData.idProofNumber.trim(),
-          allowedLeaves: formData.allowedLeaves,
-          email: formData.email.trim() || undefined,
-          address: formData.address.trim() || undefined,
-        },
       });
       toast({ title: 'Success', description: `${formData.fullName} has been added to the employee list.` });
       onOpenChange(false);

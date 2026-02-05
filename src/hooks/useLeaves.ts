@@ -78,16 +78,9 @@ export function useUpdateLeaveStatus() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, status, employeeId }: { id: string; status: 'approved' | 'rejected'; employeeId: string }) => {
-      // Update leave status
-      const result = await leaveApi.updateStatus(id, status);
-      
-      // Update employee status via PUT /api/employees/:id
-      if (status === 'approved') {
-        await employeeApi.update(employeeId, { status: 'on-leave' });
-      }
-      
-      return result;
+    mutationFn: async ({ id, status }: { id: string; status: 'approved' | 'rejected' }) => {
+      // Backend handles updating employee status automatically when approved
+      return leaveApi.updateStatus(id, status);
     },
     onSuccess: () => {
       // Invalidate leaves to update "On Leave" section
