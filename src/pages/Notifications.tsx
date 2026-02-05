@@ -26,7 +26,7 @@ export default function Notifications() {
 
   const handleApproveLeave = async (id: string, employeeId: string, employeeName: string) => {
     try {
-      await updateLeaveStatus.mutateAsync({ id, status: 'approved', employeeId });
+      await updateLeaveStatus.mutateAsync({ id, status: 'approved' });
       toast({ title: 'Leave Approved', description: `Leave request for ${employeeName} has been approved.` });
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to approve', variant: 'destructive' });
@@ -35,7 +35,7 @@ export default function Notifications() {
 
   const handleRejectLeave = async (id: string, employeeId: string, employeeName: string) => {
     try {
-      await updateLeaveStatus.mutateAsync({ id, status: 'rejected', employeeId });
+      await updateLeaveStatus.mutateAsync({ id, status: 'rejected' });
       toast({ title: 'Leave Rejected', description: `Leave request for ${employeeName} has been rejected.`, variant: 'destructive' });
     } catch (err) {
       toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to reject', variant: 'destructive' });

@@ -15,6 +15,10 @@ export interface Employee {
     value: number;
     unit: string;
   };
+  monthCalculationType?: 'calendar' | 'fixed_26';
+  isPfEnabled?: boolean;
+  isEsiEnabled?: boolean;
+  isTdsEnabled?: boolean;
   position: string;
   department: string;
   shift: ShiftType;

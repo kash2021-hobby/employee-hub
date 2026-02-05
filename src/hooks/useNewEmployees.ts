@@ -46,35 +46,9 @@ export function useApproveNewEmployee() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, employeeData }: { id: string; employeeData: Omit<Employee, 'id' | 'status' | 'takenLeaves' | 'latestSignIn' | 'latestSignOut'> }) => {
-      // Create the employee via the employee API
-      const apiData: any = {
-        full_name: employeeData.fullName,
-        dob: employeeData.dateOfBirth,
-        joining_date: employeeData.joiningDate,
-        employment_type: employeeData.employmentType,
-        work_rate: employeeData.workRate.value,
-        position: employeeData.position,
-        department: employeeData.department,
-        shift: employeeData.shift,
-        work_hours_start: employeeData.workHours.start,
-        work_hours_end: employeeData.workHours.end,
-        phone: employeeData.phoneNumber,
-        id_proof_type: employeeData.idProofType,
-        id_proof_number: employeeData.idProofNumber,
-        allowed_leaves: employeeData.allowedLeaves,
-        email: employeeData.email,
-        address: employeeData.address,
-        status: 'active',
-      };
-      
-      // Create employee
-      await employeeApi.create(apiData);
-      
-      // Delete the new member from the members table
-      await newEmployeeApi.delete(id);
-      
-      return { success: true };
+    mutationFn: async ({ id }: { id: string }) => {
+      // Backend handles creating employee and deleting member in one call
+      return newEmployeeApi.approve(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['new-employees'] });

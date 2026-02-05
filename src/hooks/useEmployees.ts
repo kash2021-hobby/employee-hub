@@ -32,6 +32,10 @@ function transformEmployee(data: any): Employee {
     email: data.email,
     address: data.address,
     profileImage: data.profile_image,
+    monthCalculationType: data.month_calculation_type || 'calendar',
+    isPfEnabled: data.is_pf_enabled || false,
+    isEsiEnabled: data.is_esi_enabled || false,
+    isTdsEnabled: data.is_tds_enabled || false,
   };
 }
 
@@ -61,6 +65,10 @@ function transformToApi(data: Partial<Employee>): any {
   if (data.status !== undefined) result.status = data.status;
   if (data.email !== undefined) result.email = data.email;
   if (data.address !== undefined) result.address = data.address;
+  if (data.monthCalculationType !== undefined) result.month_calculation_type = data.monthCalculationType;
+  if (data.isPfEnabled !== undefined) result.is_pf_enabled = data.isPfEnabled;
+  if (data.isEsiEnabled !== undefined) result.is_esi_enabled = data.isEsiEnabled;
+  if (data.isTdsEnabled !== undefined) result.is_tds_enabled = data.isTdsEnabled;
   return result;
 }
 
