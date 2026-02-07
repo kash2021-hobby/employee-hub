@@ -5,11 +5,13 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { StatCard } from '@/components/ui/StatCard';
 import { Input } from '@/components/ui/input';
 import { useEmployeesOnLeave } from '@/hooks/useLeaves';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { EmployeeOnLeave } from '@/types/employee';
 import { format, parseISO, isWithinInterval } from 'date-fns';
 import { Search, Calendar, CalendarDays, Users, Loader2 } from 'lucide-react';
 
 export default function OnLeave() {
+  const isMobile = useIsMobile();
   const { data: employeesOnLeave = [], isLoading } = useEmployeesOnLeave();
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -57,41 +59,41 @@ export default function OnLeave() {
       key: 'employeeName',
       header: 'Employee',
       render: (item: EmployeeOnLeave) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
-            <span className="text-warning font-medium">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-warning/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-warning font-medium text-xs sm:text-sm">
               {item.employeeName.split(' ').map((n) => n[0]).join('')}
             </span>
           </div>
-          <div>
-            <p className="font-medium text-foreground">{item.employeeName}</p>
-            <p className="text-sm text-muted-foreground">{item.department}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-foreground text-sm truncate">{item.employeeName}</p>
+            <p className="text-xs text-muted-foreground truncate">{item.department}</p>
           </div>
         </div>
       ),
     },
     {
       key: 'leaveType',
-      header: 'Leave Type',
+      header: 'Type',
       render: (item: EmployeeOnLeave) => <StatusBadge status={item.leaveType} />,
     },
-    {
-      key: 'startDate',
-      header: 'Start Date',
-      render: (item: EmployeeOnLeave) =>
-        format(parseISO(item.startDate), 'MMM dd, yyyy'),
-    },
-    {
-      key: 'endDate',
-      header: 'End Date',
-      render: (item: EmployeeOnLeave) =>
-        format(parseISO(item.endDate), 'MMM dd, yyyy'),
-    },
+    ...(isMobile ? [] : [
+      {
+        key: 'startDate',
+        header: 'Start',
+        render: (item: EmployeeOnLeave) => format(parseISO(item.startDate), 'MMM dd'),
+      },
+      {
+        key: 'endDate',
+        header: 'End',
+        render: (item: EmployeeOnLeave) => format(parseISO(item.endDate), 'MMM dd'),
+      },
+    ]),
     {
       key: 'totalDays',
-      header: 'Total Days',
+      header: 'Days',
       render: (item: EmployeeOnLeave) => (
-        <span className="font-medium">{item.totalDays} day(s)</span>
+        <span className="font-medium text-sm">{item.totalDays}</span>
       ),
     },
   ];
@@ -112,61 +114,43 @@ export default function OnLeave() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Total On Leave"
-          value={stats.total}
-          icon={Users}
-          variant="warning"
-        />
-        <StatCard
-          title="Planned Leave"
-          value={stats.planned}
-          icon={Calendar}
-          variant="info"
-        />
-        <StatCard
-          title="Medical Leave"
-          value={stats.medical}
-          icon={CalendarDays}
-          variant="default"
-        />
-        <StatCard
-          title="Happy Leave"
-          value={stats.happy}
-          icon={CalendarDays}
-          variant="success"
-        />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatCard title="On Leave" value={stats.total} icon={Users} variant="warning" />
+        <StatCard title="Planned" value={stats.planned} icon={Calendar} variant="info" />
+        <StatCard title="Medical" value={stats.medical} icon={CalendarDays} variant="default" />
+        <StatCard title="Happy" value={stats.happy} icon={CalendarDays} variant="success" />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or department..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">Date Range:</span>
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-[150px]"
-            placeholder="Start"
-          />
-          <span className="text-muted-foreground">to</span>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-[150px]"
-            placeholder="End"
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <span className="text-sm text-muted-foreground">Date Range:</span>
+          <div className="flex items-center gap-2 flex-1">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="flex-1 sm:w-[140px] sm:flex-none"
+              placeholder="Start"
+            />
+            <span className="text-muted-foreground text-sm">to</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="flex-1 sm:w-[140px] sm:flex-none"
+              placeholder="End"
+            />
+          </div>
         </div>
       </div>
 

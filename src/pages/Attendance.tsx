@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useAttendance, type AttendanceWithBreaks } from '@/hooks/useAttendance';
 import { useEmployees } from '@/hooks/useEmployees';
 import { useLeaveRequests } from '@/hooks/useLeaves';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { format, parseISO, differenceInMinutes, isWithinInterval } from 'date-fns';
 import {
   Search,
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/select';
 
 export default function Attendance() {
+  const isMobile = useIsMobile();
   const { data: attendance = [], isLoading, error } = useAttendance();
   const { data: employees = [] } = useEmployees();
   const { data: leaveRequests = [] } = useLeaveRequests();
@@ -101,59 +103,51 @@ export default function Attendance() {
       key: 'employeeName',
       header: 'Employee',
       render: (record: AttendanceWithBreaks) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-primary font-medium">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <span className="text-primary font-medium text-xs sm:text-sm">
               {record.employeeName.split(' ').map((n) => n[0]).join('')}
             </span>
           </div>
-          <div>
-            <p className="font-medium text-foreground">{record.employeeName}</p>
-            <p className="text-sm text-muted-foreground">{record.department}</p>
+          <div className="min-w-0">
+            <p className="font-medium text-foreground text-sm truncate">{record.employeeName}</p>
+            <p className="text-xs text-muted-foreground truncate">{record.department}</p>
           </div>
         </div>
       ),
     },
-    {
+    ...(isMobile ? [] : [{
       key: 'date',
       header: 'Date',
-      render: (record: AttendanceWithBreaks) => format(parseISO(record.date), 'MMM dd, yyyy'),
-    },
+      render: (record: AttendanceWithBreaks) => format(parseISO(record.date), 'MMM dd'),
+    }]),
     {
       key: 'signInTime',
-      header: 'Sign In',
+      header: 'In',
       render: (record: AttendanceWithBreaks) =>
-        record.signInTime ? format(new Date(record.signInTime), 'hh:mm a') : '-',
+        record.signInTime ? format(new Date(record.signInTime), 'h:mm a') : '-',
     },
     {
       key: 'signOutTime',
-      header: 'Sign Out',
+      header: 'Out',
       render: (record: AttendanceWithBreaks) =>
-        record.signOutTime ? format(new Date(record.signOutTime), 'hh:mm a') : '-',
+        record.signOutTime ? format(new Date(record.signOutTime), 'h:mm a') : '-',
     },
-    {
-      key: 'availableHours',
-      header: 'Available Hours',
-      render: (record: AttendanceWithBreaks) => formatHours(record.availableHours),
-    },
-    {
-      key: 'breakHours',
-      header: 'Break Hours',
-      render: (record: AttendanceWithBreaks) => formatHours(record.breakHours),
-    },
-    {
-      key: 'workingHours',
-      header: 'Working Hours',
-      render: (record: AttendanceWithBreaks) => formatHours(record.workingHours),
-    },
+    ...(isMobile ? [] : [
+      {
+        key: 'workingHours',
+        header: 'Hours',
+        render: (record: AttendanceWithBreaks) => formatHours(record.workingHours),
+      },
+    ]),
     {
       key: 'status',
       header: 'Status',
       render: (record: AttendanceWithBreaks) => <StatusBadge status={record.status} />,
     },
-    {
+    ...(isMobile ? [] : [{
       key: 'dailyPay',
-      header: 'Daily Pay',
+      header: 'Pay',
       render: (record: AttendanceWithBreaks) => {
         const pay = calculateDailyPay(record);
         if (pay === null) return <span className="text-muted-foreground">-</span>;
@@ -163,7 +157,7 @@ export default function Attendance() {
           </span>
         );
       },
-    },
+    }]),
   ];
 
   if (isLoading) {
@@ -193,65 +187,47 @@ export default function Attendance() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Present"
-          value={stats.present}
-          icon={UserCheck}
-          variant="success"
-        />
-        <StatCard
-          title="Late"
-          value={stats.late}
-          icon={AlertTriangle}
-          variant="warning"
-        />
-        <StatCard
-          title="Absent"
-          value={stats.absent}
-          icon={UserX}
-          variant="default"
-        />
-        <StatCard
-          title="On Leave"
-          value={stats.onLeave}
-          icon={Calendar}
-          variant="info"
-        />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <StatCard title="Present" value={stats.present} icon={UserCheck} variant="success" />
+        <StatCard title="Late" value={stats.late} icon={AlertTriangle} variant="warning" />
+        <StatCard title="Absent" value={stats.absent} icon={UserX} variant="default" />
+        <StatCard title="On Leave" value={stats.onLeave} icon={Calendar} variant="info" />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or department..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
         </div>
-        <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="pl-10 w-[180px]"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 sm:flex-none">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="pl-10 w-full sm:w-[180px]"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="present">Present</SelectItem>
+              <SelectItem value="late">Late</SelectItem>
+              <SelectItem value="absent">Absent</SelectItem>
+              <SelectItem value="on-leave">On Leave</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="present">Present</SelectItem>
-            <SelectItem value="late">Late</SelectItem>
-            <SelectItem value="absent">Absent</SelectItem>
-            <SelectItem value="on-leave">On Leave</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Results count */}
