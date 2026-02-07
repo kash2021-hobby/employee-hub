@@ -64,8 +64,17 @@ export default function Dashboard() {
   const todayAttendance = todayAttendanceRecords.slice(0, 5);
 
   const leaveColumns = [
-    { key: 'employeeName', header: 'Employee' },
-    { key: 'department', header: 'Department' },
+    {
+      key: 'employeeName',
+      header: 'Employee',
+      render: (item: LeaveRequest) => (
+        <div className="min-w-0">
+          <p className="font-medium text-foreground text-sm truncate">{item.employeeName}</p>
+          <p className="text-xs text-muted-foreground truncate sm:hidden">{item.department}</p>
+        </div>
+      ),
+    },
+    { key: 'department', header: 'Department', className: 'hidden sm:table-cell' },
     {
       key: 'leaveType',
       header: 'Type',
@@ -74,14 +83,24 @@ export default function Dashboard() {
     {
       key: 'dates',
       header: 'Dates',
+      className: 'hidden sm:table-cell',
       render: (item: LeaveRequest) =>
         `${format(parseISO(item.startDate), 'MMM dd')} - ${format(parseISO(item.endDate), 'MMM dd')}`,
     },
   ];
 
   const attendanceColumns = [
-    { key: 'employeeName', header: 'Employee' },
-    { key: 'department', header: 'Department' },
+    {
+      key: 'employeeName',
+      header: 'Employee',
+      render: (item: AttendanceRecord) => (
+        <div className="min-w-0">
+          <p className="font-medium text-foreground text-sm truncate">{item.employeeName}</p>
+          <p className="text-xs text-muted-foreground truncate sm:hidden">{item.department}</p>
+        </div>
+      ),
+    },
+    { key: 'department', header: 'Department', className: 'hidden sm:table-cell' },
     {
       key: 'signInTime',
       header: 'Sign In',
@@ -111,7 +130,7 @@ export default function Dashboard() {
       />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <StatCard title="Total Employees" value={stats.totalEmployees} icon={Users} variant="primary" />
         <StatCard title="Active Today" value={stats.activeEmployees} icon={UserCheck} variant="success" />
         <StatCard title="On Leave" value={stats.onLeaveToday} icon={CalendarDays} variant="warning" />
@@ -119,25 +138,25 @@ export default function Dashboard() {
       </div>
 
       {/* Attendance Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <StatCard title="Present Today" value={stats.presentToday} icon={Clock} variant="success" />
-        <StatCard title="Late Today" value={stats.lateToday} icon={AlertTriangle} variant="warning" />
-        <StatCard title="Absent Today" value={stats.absentToday} icon={UserX} variant="default" />
+      <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+        <StatCard title="Present" value={stats.presentToday} icon={Clock} variant="success" />
+        <StatCard title="Late" value={stats.lateToday} icon={AlertTriangle} variant="warning" />
+        <StatCard title="Absent" value={stats.absentToday} icon={UserX} variant="default" />
       </div>
 
       {/* Tables Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-card rounded-xl border border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Pending Leave Requests</h2>
-            <span className="text-sm text-muted-foreground">{stats.pendingLeaveRequests} pending</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-base sm:text-lg font-semibold truncate">Pending Leave</h2>
+            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{stats.pendingLeaveRequests} pending</span>
           </div>
           <DataTable columns={leaveColumns} data={pendingLeaves} keyExtractor={(item) => item.id} emptyMessage="No pending leave requests" />
         </div>
-        <div className="bg-card rounded-xl border border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Today's Attendance</h2>
-            <span className="text-sm text-muted-foreground">{format(new Date(), 'MMM dd, yyyy')}</span>
+        <div className="bg-card rounded-xl border border-border p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-base sm:text-lg font-semibold truncate">Today's Attendance</h2>
+            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{format(new Date(), 'MMM dd')}</span>
           </div>
           <DataTable columns={attendanceColumns} data={todayAttendance} keyExtractor={(item) => item.id} emptyMessage="No attendance records" />
         </div>

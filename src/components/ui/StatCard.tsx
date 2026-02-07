@@ -41,18 +41,18 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'stat-card border animate-fade-in',
+        'rounded-xl p-4 sm:p-6 border animate-fade-in',
         variantStyles[variant],
         className
       )}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="stat-label">{title}</p>
-          <p className="stat-value mt-2">{value}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">{title}</p>
+          <p className="text-xl sm:text-3xl font-bold text-foreground mt-1 sm:mt-2">{value}</p>
           {trend && (
             <p className={cn(
-              'text-sm mt-2',
+              'text-xs sm:text-sm mt-1 sm:mt-2',
               trend.value >= 0 ? 'text-success' : 'text-destructive'
             )}>
               {trend.value >= 0 ? '+' : ''}{trend.value}% {trend.label}
@@ -60,8 +60,8 @@ export function StatCard({
           )}
         </div>
         {Icon && (
-          <div className={cn('p-3 rounded-lg', iconStyles[variant])}>
-            <Icon className="w-6 h-6" />
+          <div className={cn('p-2 sm:p-3 rounded-lg flex-shrink-0', iconStyles[variant])}>
+            <Icon className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
         )}
       </div>
