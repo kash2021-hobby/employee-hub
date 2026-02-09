@@ -24,7 +24,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch('https://const-backend-1.onrender.com/api/auth/login', {
+      const response = await fetch('http://10.19.170.100:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
