@@ -6,6 +6,8 @@ export interface AttendanceWithBreaks extends AttendanceRecord {
   breakHours: number;
   availableHours: number | null;
   workingHours: number | null;
+  breakInTime: string | null;
+  breakOutTime: string | null;
 }
 
 // Determine if employee is late based on sign-in time vs shift start
@@ -131,18 +133,25 @@ export function useAttendance() {
       });
       
       // Create a map of employee_id + date to total break hours
-      const breaksByEmployeeDate = new Map<string, number>();
+      const breaksByEmployeeDate = new Map<string, { total: number; firstIn: string | null; lastOut: string | null }>();
       breaksData.forEach((breakRecord: BreakRecord) => {
         const key = `${breakRecord.employee_id}_${breakRecord.date}`;
-        const existingBreakHours = breaksByEmployeeDate.get(key) || 0;
+        const existing = breaksByEmployeeDate.get(key) || { total: 0, firstIn: null, lastOut: null };
         const breakMinutes = getBreakMinutes(breakRecord);
-        breaksByEmployeeDate.set(key, existingBreakHours + (breakMinutes / 60));
+        existing.total += breakMinutes / 60;
+        if (breakRecord.start_time && (!existing.firstIn || breakRecord.start_time < existing.firstIn)) {
+          existing.firstIn = breakRecord.start_time;
+        }
+        if (breakRecord.end_time && (!existing.lastOut || breakRecord.end_time > existing.lastOut)) {
+          existing.lastOut = breakRecord.end_time;
+        }
+        breaksByEmployeeDate.set(key, existing);
       });
       
       return attendanceData.map((record: any) => {
         const baseRecord = transformAttendance(record, employeesMap);
         const key = `${record.employee_id}_${record.date}`;
-        const breakHours = breaksByEmployeeDate.get(key) || 0;
+        const breakInfo = breaksByEmployeeDate.get(key) || { total: 0, firstIn: null, lastOut: null };
 
         const availableHours =
           baseRecord.signInTime && baseRecord.signOutTime
@@ -154,13 +163,15 @@ export function useAttendance() {
               )
             : null;
 
-        const workingHours = availableHours === null ? null : Math.max(0, availableHours - breakHours);
+        const workingHours = availableHours === null ? null : Math.max(0, availableHours - breakInfo.total);
 
         return {
           ...baseRecord,
-          breakHours,
+          breakHours: breakInfo.total,
           availableHours,
           workingHours,
+          breakInTime: breakInfo.firstIn,
+          breakOutTime: breakInfo.lastOut,
         };
       });
     },

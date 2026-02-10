@@ -135,6 +135,18 @@ export default function Attendance() {
     },
     ...(isMobile ? [] : [
       {
+        key: 'breakIn',
+        header: 'Break In',
+        render: (record: AttendanceWithBreaks) =>
+          record.breakInTime ? format(new Date(record.breakInTime), 'h:mm a') : '-',
+      },
+      {
+        key: 'breakOut',
+        header: 'Break Out',
+        render: (record: AttendanceWithBreaks) =>
+          record.breakOutTime ? format(new Date(record.breakOutTime), 'h:mm a') : '-',
+      },
+      {
         key: 'workingHours',
         header: 'Hours',
         render: (record: AttendanceWithBreaks) => formatHours(record.workingHours),
