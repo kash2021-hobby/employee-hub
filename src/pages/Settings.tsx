@@ -20,7 +20,7 @@ export default function Settings() {
   const fetchLocations = () => {
     settingsApi
       .getAll()
-      .then((data) => setLocations(data))
+      .then((data) => setLocations(Array.isArray(data) ? data : []))
       .catch(() => setLocations([]))
       .finally(() => setLoading(false));
   };
