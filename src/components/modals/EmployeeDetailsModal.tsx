@@ -264,18 +264,24 @@ export function EmployeeDetailsModal({
                         <th className="text-left py-2 font-medium text-muted-foreground">Date</th>
                         <th className="text-left py-2 font-medium text-muted-foreground">In</th>
                         <th className="text-left py-2 font-medium text-muted-foreground">Out</th>
+                        <th className="text-left py-2 font-medium text-muted-foreground">Hours</th>
                         <th className="text-left py-2 font-medium text-muted-foreground">Status</th>
                         <th className="text-right py-2 font-medium text-muted-foreground">Pay</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {monthlyAttendance.map((record) => {
+                          {monthlyAttendance.map((record) => {
                         const pay = calculateDailyPay(record.signInTime, record.signOutTime);
+                        const dailyHours =
+                          record.signInTime && record.signOutTime
+                            ? differenceInMinutes(parseISO(record.signOutTime), parseISO(record.signInTime)) / 60
+                            : null;
                         return (
                           <tr key={record.id} className="border-b border-border last:border-0">
                             <td className="py-2">{format(parseISO(record.date), 'MMM dd')}</td>
                             <td className="py-2">{record.signInTime ? format(parseISO(record.signInTime), 'hh:mm a') : '-'}</td>
                             <td className="py-2">{record.signOutTime ? format(parseISO(record.signOutTime), 'hh:mm a') : '-'}</td>
+                            <td className="py-2 font-medium">{dailyHours !== null ? `${dailyHours.toFixed(1)}h` : '-'}</td>
                             <td className="py-2"><StatusBadge status={record.status} /></td>
                             <td className="py-2 text-right font-medium text-green-600 dark:text-green-400">
                               {pay > 0 ? `$${pay.toFixed(2)}` : '-'}
