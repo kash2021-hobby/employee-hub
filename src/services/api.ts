@@ -154,20 +154,6 @@ export const employeesOnLeaveApi = {
   getAll: () => fetchApi<EmployeeOnLeave[]>('/api/leaves?status=approved'),
 };
 
-// Employee Verification & OTP API
-export const employeeAuthApi = {
-  verifyByPhone: (phone: string) =>
-    fetchApi<{ id: string; full_name: string; allowed_leaves: number; taken_leaves: number }>(
-      `/api/employees/verify/${encodeURIComponent(phone)}`
-    ),
-
-  sendOtp: (phone: string) =>
-    fetchApi<{ success: boolean; message: string }>('/api/auth/send-otp', {
-      method: 'POST',
-      body: JSON.stringify({ phone }),
-    }),
-};
-
 // Break Records API
 export interface BreakRecord {
   id: string;
