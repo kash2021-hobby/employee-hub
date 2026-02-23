@@ -184,3 +184,20 @@ export interface DashboardStats {
 export const dashboardApi = {
   getStats: () => fetchApi<DashboardStats>('/dashboard/stats'),
 };
+
+// Company Settings API
+export interface CompanySettings {
+  id?: string;
+  latitude: number;
+  longitude: number;
+  address: string;
+}
+
+export const settingsApi = {
+  get: () => fetchApi<CompanySettings>('/api/settings'),
+  update: (data: { latitude: number; longitude: number; address: string }) =>
+    fetchApi<{ message: string; data: CompanySettings }>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+};

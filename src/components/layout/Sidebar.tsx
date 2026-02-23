@@ -6,6 +6,7 @@ import {
   Calendar,
   CalendarDays,
   LayoutDashboard,
+  Settings,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -47,6 +48,11 @@ const navItems = [
     title: 'Holidays',
     href: '/holidays',
     icon: Calendar,
+  },
+  {
+    title: 'Settings',
+    href: '/settings',
+    icon: Settings,
   },
 ];
 
