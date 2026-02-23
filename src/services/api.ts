@@ -194,10 +194,14 @@ export interface CompanySettings {
 }
 
 export const settingsApi = {
-  get: () => fetchApi<CompanySettings>('/api/settings'),
-  update: (data: { latitude: number; longitude: number; address: string }) =>
+  getAll: () => fetchApi<CompanySettings[]>('/api/settings'),
+  create: (data: { latitude: number; longitude: number; address: string }) =>
     fetchApi<{ message: string; data: CompanySettings }>('/api/settings', {
-      method: 'PUT',
+      method: 'POST',
       body: JSON.stringify(data),
+    }),
+  delete: (id: string) =>
+    fetchApi<{ message: string }>(`/api/settings/${id}`, {
+      method: 'DELETE',
     }),
 };
