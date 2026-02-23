@@ -14,6 +14,7 @@ import Notifications from "./pages/Notifications";
 import OnLeave from "./pages/OnLeave";
 import Holidays from "./pages/Holidays";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
                       <Route path="/notifications" element={<Notifications />} />
                       <Route path="/on-leave" element={<OnLeave />} />
                       <Route path="/holidays" element={<Holidays />} />
+                      <Route path="/settings" element={<Settings />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </DashboardLayout>
