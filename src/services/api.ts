@@ -8,7 +8,7 @@ import type {
 } from '@/types/employee';
 
 // Base API URL
-const API_BASE_URL = 'https://api.ltabaicrm.shop';
+const API_BASE_URL = 'https://const-backend-1.onrender.com';
 
 // Get auth token from localStorage
 function getAuthToken(): string | null {
