@@ -76,7 +76,9 @@ export function useEmployees() {
   return useQuery({
     queryKey: ['employees'],
     queryFn: async () => {
-      const data = await employeeApi.getAll();
+      const response = await employeeApi.getAll();
+      // Handle both array response and { data: [...] } wrapped response
+      const data = Array.isArray(response) ? response : (response as any)?.data ?? [];
       return data.map(transformEmployee);
     },
   });

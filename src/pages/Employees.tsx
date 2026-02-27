@@ -34,7 +34,7 @@ export default function Employees() {
   const isMobile = useIsMobile();
 
   // Get unique departments
-  const departments = [...new Set(employees.map((e) => e.department))];
+  const departments = [...new Set(employees.map((e) => e.department))].filter(Boolean) as string[];
 
   // Filter employees
   const filteredEmployees = employees.filter((employee) => {
