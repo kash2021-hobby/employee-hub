@@ -16,6 +16,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   present: { label: 'Present', className: 'status-present' },
   late: { label: 'Late', className: 'status-late' },
   absent: { label: 'Absent', className: 'status-absent' },
+  overtime: { label: 'Overtime', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
   
   // Leave Types
   planned: { label: 'Planned', className: 'bg-info/10 text-info' },
