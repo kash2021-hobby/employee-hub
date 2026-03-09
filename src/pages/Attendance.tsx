@@ -132,12 +132,12 @@ export default function Attendance() {
   const handleExport = () => {
     if (filteredAttendance.length === 0) return;
 
-    const headers = ['Employee', 'Department', 'Date', 'Sign In', 'Sign Out', 'Break In', 'Break Out', 'Working Hours', 'Status', 'Pay'];
+    const headers = ['Employee', 'Department', 'Date', 'Sign In', 'Sign Out', 'Break In', 'Break Out', 'Working Hours', 'Status', 'Late (min)', 'Overtime (min)', 'Pay'];
     const rows = filteredAttendance.map((r) => {
       const pay = calculateDailyPay(r);
       return [
-        r.employeeName,
-        r.department,
+        `"${r.employeeName}"`,
+        `"${r.department}"`,
         format(parseISO(r.date), 'yyyy-MM-dd'),
         r.signInTime ? format(new Date(r.signInTime), 'h:mm a') : '-',
         r.signOutTime ? format(new Date(r.signOutTime), 'h:mm a') : '-',
@@ -145,6 +145,8 @@ export default function Attendance() {
         r.breakOutTime ? format(new Date(r.breakOutTime), 'h:mm a') : '-',
         formatHours(r.workingHours),
         r.status,
+        r.lateMinutes > 0 ? r.lateMinutes : '-',
+        r.overtimeMinutes > 0 ? r.overtimeMinutes : '-',
         pay !== null ? `$${pay.toFixed(2)}` : '-',
       ].join(',');
     });
