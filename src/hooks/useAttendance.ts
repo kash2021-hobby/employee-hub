@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceApi, employeeApi, breakApi, type BreakRecord } from '@/services/api';
 import type { AttendanceRecord, AttendanceStatus, Employee } from '@/types/employee';
+import { getShiftSettings, parseTimeToMinutes, getDateMinutes } from '@/lib/shiftSettings';
 
 export interface AttendanceWithBreaks extends AttendanceRecord {
   breakHours: number;
@@ -8,55 +9,90 @@ export interface AttendanceWithBreaks extends AttendanceRecord {
   workingHours: number | null;
   breakInTime: string | null;
   breakOutTime: string | null;
+  lateMinutes: number;
+  overtimeMinutes: number;
 }
 
-// Determine if employee is late based on sign-in time vs shift start
-function determineStatus(signIn: string | null, shiftStart: string | null, existingStatus: string): AttendanceStatus {
-  // If already marked as on-leave or absent, keep that status
-  if (existingStatus === 'on-leave' || existingStatus === 'absent') {
-    return existingStatus as AttendanceStatus;
+/**
+ * Smart status determination:
+ * - on-leave / absent kept if already set
+ * - No sign-in → absent
+ * - Clock-in late + clock-out late enough to compensate → present
+ * - Clock-in late + NOT compensated → late
+ * - Clock-in on time + clock-out after shift end → overtime
+ * - Otherwise → present
+ */
+function determineSmartStatus(
+  signIn: string | null,
+  signOut: string | null,
+  existingStatus: string
+): { status: AttendanceStatus; lateMinutes: number; overtimeMinutes: number } {
+  if (existingStatus === 'on-leave') {
+    return { status: 'on-leave', lateMinutes: 0, overtimeMinutes: 0 };
   }
-  
-  // No sign-in means absent (unless on-leave)
   if (!signIn) {
-    return 'absent';
+    return { status: existingStatus === 'absent' ? 'absent' : 'absent', lateMinutes: 0, overtimeMinutes: 0 };
   }
-  
-  // If we have shift start time, compare with sign-in
-  if (shiftStart) {
-    const signInDate = new Date(signIn);
-    const signInTime = signInDate.getHours() * 60 + signInDate.getMinutes();
-    
-    // Parse shift start (format: "HH:mm" or "HH:mm:ss")
-    const [hours, minutes] = shiftStart.split(':').map(Number);
-    const shiftStartMinutes = hours * 60 + minutes;
-    
-    // If signed in after shift start, mark as late
-    if (signInTime > shiftStartMinutes) {
-      return 'late';
+
+  const shift = getShiftSettings();
+  const shiftStartMin = parseTimeToMinutes(shift.startTime);
+  const shiftEndMin = parseTimeToMinutes(shift.endTime);
+
+  const signInDate = new Date(signIn);
+  const signInMin = getDateMinutes(signInDate);
+  const lateMinutes = Math.max(0, signInMin - shiftStartMin);
+
+  let overtimeMinutes = 0;
+  let status: AttendanceStatus = 'present';
+
+  if (signOut) {
+    const signOutDate = new Date(signOut);
+    const signOutMin = getDateMinutes(signOutDate);
+    const extraMinutes = Math.max(0, signOutMin - shiftEndMin);
+
+    if (lateMinutes > 0) {
+      // Late clock-in: did they compensate by staying late?
+      if (extraMinutes >= lateMinutes) {
+        status = 'present'; // compensated
+        overtimeMinutes = Math.max(0, extraMinutes - lateMinutes);
+      } else {
+        status = 'late';
+      }
+    } else {
+      // On-time clock-in
+      if (extraMinutes > 0) {
+        status = 'overtime';
+        overtimeMinutes = extraMinutes;
+      } else {
+        status = 'present';
+      }
     }
+  } else {
+    // No sign-out yet — just mark based on clock-in
+    status = lateMinutes > 0 ? 'late' : 'present';
   }
-  
-  return 'present';
+
+  return { status, lateMinutes, overtimeMinutes };
 }
 
 // Transform snake_case API response to camelCase frontend type
-function transformAttendance(data: any, employeesMap: Map<string, Employee>): AttendanceRecord {
-  const employee = employeesMap.get(data.employee_id);
-  const shiftStart = employee?.workHours?.start || null;
+function transformAttendance(data: any): AttendanceRecord & { lateMinutes: number; overtimeMinutes: number } {
   const signIn = data.sign_in;
-  const status = determineStatus(signIn, shiftStart, data.status || '');
-  
+  const signOut = data.sign_out;
+  const { status, lateMinutes, overtimeMinutes } = determineSmartStatus(signIn, signOut, data.status || '');
+
   return {
     id: data.id,
     employeeId: data.employee_id,
-    employeeName: data.Employee?.full_name || employee?.fullName || 'Unknown',
-    department: data.Employee?.department || employee?.department || '',
+    employeeName: data.Employee?.full_name || 'Unknown',
+    department: data.Employee?.department || '',
     date: data.date,
     signInTime: signIn,
-    signOutTime: data.sign_out,
+    signOutTime: signOut,
     totalWorkingHours: data.total_hours ? parseFloat(data.total_hours) : null,
     status,
+    lateMinutes,
+    overtimeMinutes,
   };
 }
 
@@ -118,21 +154,19 @@ export function useAttendance() {
   return useQuery({
     queryKey: ['attendance'],
     queryFn: async (): Promise<AttendanceWithBreaks[]> => {
-      // Fetch attendance, employees, and breaks in parallel
       const [attendanceData, employeesData, breaksData] = await Promise.all([
         attendanceApi.getAll(),
         employeeApi.getAll(),
-        breakApi.getAll().catch(() => [] as BreakRecord[]), // Gracefully handle if breaks API fails
+        breakApi.getAll().catch(() => [] as BreakRecord[]),
       ]);
-      
-      // Create a map of employee ID to employee for quick lookup
+
       const employeesMap = new Map<string, Employee>();
-      employeesData.forEach((emp: any) => {
+      const rawEmployees = Array.isArray(employeesData) ? employeesData : (employeesData as any)?.data ?? [];
+      rawEmployees.forEach((emp: any) => {
         const transformed = transformEmployee(emp);
         employeesMap.set(transformed.id, transformed);
       });
-      
-      // Create a map of employee_id + date to total break hours
+
       const breaksByEmployeeDate = new Map<string, { total: number; firstIn: string | null; lastOut: string | null }>();
       breaksData.forEach((breakRecord: BreakRecord) => {
         const key = `${breakRecord.employee_id}_${breakRecord.date}`;
@@ -147,20 +181,22 @@ export function useAttendance() {
         }
         breaksByEmployeeDate.set(key, existing);
       });
-      
+
       return attendanceData.map((record: any) => {
-        const baseRecord = transformAttendance(record, employeesMap);
+        const baseRecord = transformAttendance(record);
+        // Override employee name from our map if available
+        const employee = employeesMap.get(baseRecord.employeeId);
+        if (employee) {
+          baseRecord.employeeName = employee.fullName || baseRecord.employeeName;
+          baseRecord.department = employee.department || baseRecord.department;
+        }
+
         const key = `${record.employee_id}_${record.date}`;
         const breakInfo = breaksByEmployeeDate.get(key) || { total: 0, firstIn: null, lastOut: null };
 
         const availableHours =
           baseRecord.signInTime && baseRecord.signOutTime
-            ? Math.max(
-                0,
-                (new Date(baseRecord.signOutTime).getTime() -
-                  new Date(baseRecord.signInTime).getTime()) /
-                  3600000
-              )
+            ? Math.max(0, (new Date(baseRecord.signOutTime).getTime() - new Date(baseRecord.signInTime).getTime()) / 3600000)
             : null;
 
         const workingHours = availableHours === null ? null : Math.max(0, availableHours - breakInfo.total);
@@ -180,7 +216,6 @@ export function useAttendance() {
 
 export function useClockIn() {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: (employeeId: string) => attendanceApi.clockIn(employeeId),
     onSuccess: () => {
@@ -191,7 +226,6 @@ export function useClockIn() {
 
 export function useClockOut() {
   const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: (employeeId: string) => attendanceApi.clockOut(employeeId),
     onSuccess: () => {

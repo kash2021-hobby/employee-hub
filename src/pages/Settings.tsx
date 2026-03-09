@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { settingsApi, type CompanySettings } from '@/services/api';
-import { MapPin, Plus, Loader2, Trash2 } from 'lucide-react';
+import { MapPin, Plus, Loader2, Trash2, Clock, Save } from 'lucide-react';
+import { getShiftSettings, saveShiftSettings } from '@/lib/shiftSettings';
 
 export default function Settings() {
   const [latitude, setLatitude] = useState('');
@@ -16,6 +17,25 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Shift settings
+  const [shiftStart, setShiftStart] = useState('09:00');
+  const [shiftEnd, setShiftEnd] = useState('18:00');
+
+  useEffect(() => {
+    const shift = getShiftSettings();
+    setShiftStart(shift.startTime);
+    setShiftEnd(shift.endTime);
+  }, []);
+
+  const handleSaveShift = () => {
+    if (!shiftStart || !shiftEnd) {
+      toast({ title: 'Validation Error', description: 'Both start and end times are required.', variant: 'destructive' });
+      return;
+    }
+    saveShiftSettings({ startTime: shiftStart, endTime: shiftEnd });
+    toast({ title: 'Shift Saved', description: `Shift time set to ${shiftStart} – ${shiftEnd}. Attendance status will update on next load.` });
+  };
 
   const fetchLocations = () => {
     settingsApi
@@ -77,9 +97,56 @@ export default function Settings() {
 
   return (
     <div>
-      <PageHeader title="Settings" description="Configure office locations for attendance verification" />
+      <PageHeader title="Settings" description="Configure shift timing and office locations" />
 
       <div className="space-y-6 max-w-2xl">
+        {/* Shift Timing */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              Shift Timing
+            </CardTitle>
+            <CardDescription>
+              Set the morning shift start and end time. Employees clocking in after start time are marked late.
+              If a late employee stays extra to compensate, they'll be marked present. On-time employees who stay past end time are marked overtime.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="shiftStart">Shift Start Time</Label>
+                  <Input
+                    id="shiftStart"
+                    type="time"
+                    value={shiftStart}
+                    onChange={(e) => setShiftStart(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="shiftEnd">Shift End Time</Label>
+                  <Input
+                    id="shiftEnd"
+                    type="time"
+                    value={shiftEnd}
+                    onChange={(e) => setShiftEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+                <p>• <strong>Late:</strong> Clock-in after {shiftStart || '09:00'} → marked late</p>
+                <p>• <strong>Compensated:</strong> Late 30 min + stays 30 min extra → present</p>
+                <p>• <strong>Overtime:</strong> On-time clock-in + clock-out after {shiftEnd || '18:00'}</p>
+              </div>
+              <Button onClick={handleSaveShift} className="w-full sm:w-auto gap-2">
+                <Save className="w-4 h-4" />
+                Save Shift Timing
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Add New Location */}
         <Card>
           <CardHeader>
