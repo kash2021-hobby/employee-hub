@@ -1,7 +1,12 @@
 export type EmploymentType = 'hourly' | 'daily' | 'weekly';
 export type ShiftType = 'morning' | 'evening' | 'night' | 'custom';
 export type EmployeeStatus = 'active' | 'on-leave' | 'inactive';
-export type AttendanceStatus = 'present' | 'late' | 'absent' | 'on-leave';
+export type AttendanceStatus = 'present' | 'late' | 'absent' | 'on-leave' | 'overtime';
+
+export interface ShiftSettings {
+  startTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
+}
 export type LeaveType = 'planned' | 'happy' | 'medical';
 export type IdProofType = 'passport' | 'national-id' | 'driving-license' | 'other';
 

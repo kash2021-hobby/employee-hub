@@ -31,6 +31,7 @@ import {
   Loader2,
   Download,
   FileSpreadsheet,
+  Clock,
 } from 'lucide-react';
 import {
   Select,
@@ -84,7 +85,8 @@ export default function Attendance() {
   // Stats
   const lateCount = filteredAttendance.filter((a) => a.status === 'late').length;
   const presentOnTimeCount = filteredAttendance.filter((a) => a.status === 'present').length;
-  const presentCount = presentOnTimeCount + lateCount;
+  const overtimeCount = filteredAttendance.filter((a) => a.status === 'overtime').length;
+  const presentCount = presentOnTimeCount + lateCount + overtimeCount;
 
   const selectedDateObj = parseISO(selectedDate);
   const onLeaveCount = leaveRequests.filter((leave) => {
@@ -97,7 +99,7 @@ export default function Attendance() {
   const activeEmployees = employees.filter((e) => e.status === 'active').length;
   const absentCount = Math.max(0, activeEmployees - presentCount - onLeaveCount);
 
-  const stats = { present: presentCount, late: lateCount, absent: absentCount, onLeave: onLeaveCount };
+  const stats = { present: presentCount, late: lateCount, absent: absentCount, onLeave: onLeaveCount, overtime: overtimeCount };
 
   const formatHours = (hours: number | null) => {
     if (hours === null) return '-';
@@ -131,12 +133,12 @@ export default function Attendance() {
   const handleExport = () => {
     if (filteredAttendance.length === 0) return;
 
-    const headers = ['Employee', 'Department', 'Date', 'Sign In', 'Sign Out', 'Break In', 'Break Out', 'Working Hours', 'Status', 'Pay'];
+    const headers = ['Employee', 'Department', 'Date', 'Sign In', 'Sign Out', 'Break In', 'Break Out', 'Working Hours', 'Status', 'Late (min)', 'Overtime (min)', 'Pay'];
     const rows = filteredAttendance.map((r) => {
       const pay = calculateDailyPay(r);
       return [
-        r.employeeName,
-        r.department,
+        `"${r.employeeName}"`,
+        `"${r.department}"`,
         format(parseISO(r.date), 'yyyy-MM-dd'),
         r.signInTime ? format(new Date(r.signInTime), 'h:mm a') : '-',
         r.signOutTime ? format(new Date(r.signOutTime), 'h:mm a') : '-',
@@ -144,6 +146,8 @@ export default function Attendance() {
         r.breakOutTime ? format(new Date(r.breakOutTime), 'h:mm a') : '-',
         formatHours(r.workingHours),
         r.status,
+        r.lateMinutes > 0 ? r.lateMinutes : '-',
+        r.overtimeMinutes > 0 ? r.overtimeMinutes : '-',
         pay !== null ? `$${pay.toFixed(2)}` : '-',
       ].join(',');
     });
@@ -290,9 +294,10 @@ export default function Attendance() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mb-6">
         <StatCard title="Present" value={stats.present} icon={UserCheck} variant="success" />
         <StatCard title="Late" value={stats.late} icon={AlertTriangle} variant="warning" />
+        <StatCard title="Overtime" value={stats.overtime} icon={Clock} variant="info" />
         <StatCard title="Absent" value={stats.absent} icon={UserX} variant="default" />
         <StatCard title="On Leave" value={stats.onLeave} icon={Calendar} variant="info" />
       </div>
@@ -343,6 +348,7 @@ export default function Attendance() {
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="present">Present</SelectItem>
               <SelectItem value="late">Late</SelectItem>
+              <SelectItem value="overtime">Overtime</SelectItem>
               <SelectItem value="absent">Absent</SelectItem>
               <SelectItem value="on-leave">On Leave</SelectItem>
             </SelectContent>
