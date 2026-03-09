@@ -293,9 +293,10 @@ export default function Attendance() {
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mb-6">
         <StatCard title="Present" value={stats.present} icon={UserCheck} variant="success" />
         <StatCard title="Late" value={stats.late} icon={AlertTriangle} variant="warning" />
+        <StatCard title="Overtime" value={stats.overtime} icon={Clock} variant="info" />
         <StatCard title="Absent" value={stats.absent} icon={UserX} variant="default" />
         <StatCard title="On Leave" value={stats.onLeave} icon={Calendar} variant="info" />
       </div>
