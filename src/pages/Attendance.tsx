@@ -84,7 +84,8 @@ export default function Attendance() {
   // Stats
   const lateCount = filteredAttendance.filter((a) => a.status === 'late').length;
   const presentOnTimeCount = filteredAttendance.filter((a) => a.status === 'present').length;
-  const presentCount = presentOnTimeCount + lateCount;
+  const overtimeCount = filteredAttendance.filter((a) => a.status === 'overtime').length;
+  const presentCount = presentOnTimeCount + lateCount + overtimeCount;
 
   const selectedDateObj = parseISO(selectedDate);
   const onLeaveCount = leaveRequests.filter((leave) => {
@@ -97,7 +98,7 @@ export default function Attendance() {
   const activeEmployees = employees.filter((e) => e.status === 'active').length;
   const absentCount = Math.max(0, activeEmployees - presentCount - onLeaveCount);
 
-  const stats = { present: presentCount, late: lateCount, absent: absentCount, onLeave: onLeaveCount };
+  const stats = { present: presentCount, late: lateCount, absent: absentCount, onLeave: onLeaveCount, overtime: overtimeCount };
 
   const formatHours = (hours: number | null) => {
     if (hours === null) return '-';
