@@ -348,6 +348,7 @@ export default function Attendance() {
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="present">Present</SelectItem>
               <SelectItem value="late">Late</SelectItem>
+              <SelectItem value="overtime">Overtime</SelectItem>
               <SelectItem value="absent">Absent</SelectItem>
               <SelectItem value="on-leave">On Leave</SelectItem>
             </SelectContent>
